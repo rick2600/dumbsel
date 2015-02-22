@@ -4,14 +4,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 
 static int init_io_bus(vm_t *vm);
 static int init_mem_bus(vm_t *vm);
 static int init_cpu(vm_t *vm);
 static int init_ram(vm_t *vm);
+static void load_code(vm_t *vm, char *code_file);
+static off_t getfsize(const char *filename);
 
 
-int turn_on(vm_t *vm)
+int turn_on(vm_t *vm, char *code_file)
 {
 
   pthread_t cpu_thread, mmu_thread, io_thread;
@@ -23,6 +29,9 @@ int turn_on(vm_t *vm)
     turn_off(vm);
     exit(EXIT_FAILURE);
   }
+
+  load_code(vm, code_file);
+  vm->debug_mode = 1;
 
   if (pthread_create(&cpu_thread, NULL, cpu_uc,  (void *)vm) != 0)
   {
@@ -52,37 +61,6 @@ int turn_on(vm_t *vm)
     exit(EXIT_FAILURE);
   }
 
-
-  vm->debug_mode = 1;
-
-  // This is a test
-  // mov r15,0xaabb
-  *(int *)&vm->ram[0] = SWAP_UINT32(0x02febbaa);
-  // ext r13,r15
-  *(int *)&vm->ram[4] = SWAP_UINT32(0x04df0000);
-  // exts r13,r15
-  *(int *)&vm->ram[8] = SWAP_UINT32(0x08df0000);
-  // add r3,r4,r5
-  *(int *)&vm->ram[12] = SWAP_UINT32(0x0c345000);
-  // add r3,r4,0x1122
-  *(int *)&vm->ram[16] = SWAP_UINT32(0x0e342211);
-  // sub r3,r4,0x0001
-  *(int *)&vm->ram[20] = SWAP_UINT32(0x12340100);
-  // inc r15
-  *(int *)&vm->ram[24] = SWAP_UINT32(0x1cf00000);
-  // dec r13
-  *(int *)&vm->ram[28] = SWAP_UINT32(0x20d00000);
-  // not r3
-  *(int *)&vm->ram[32] = SWAP_UINT32(0x38300000);
-  //decb r0
-  *(int *)&vm->ram[36] = SWAP_UINT32(0x21000000);
-  
-
-  // This is a test
-
-
-
-
   pthread_join(cpu_thread, NULL);
   pthread_join(mmu_thread, NULL);
 
@@ -90,6 +68,35 @@ int turn_on(vm_t *vm)
   pthread_mutex_destroy(&vm->io_bus->lock);
 
   return 1;
+}
+
+static void load_code(vm_t *vm, char *code_file)
+{
+  FILE *in;
+
+  unsigned int size = getfsize(code_file);
+  if (size >= RAM_SIZE)
+  {
+    fprintf(stderr, "code too big to fit in memory\n");
+    turn_off(vm);
+  }
+
+  in = fopen(code_file, "rb");
+  if (!in)
+  {
+    perror("");
+    turn_off(vm);
+  }
+  fread(vm->ram, sizeof(unsigned char), size, in);
+  fclose(in);
+
+}
+
+static off_t getfsize(const char *filename)
+{
+  struct stat st;
+  stat(filename, &st);
+  return st.st_size;
 }
 
 

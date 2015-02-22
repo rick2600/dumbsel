@@ -20,7 +20,7 @@ typedef struct
 
 
 vm_t *create_vm(void);
-int turn_on(vm_t *vm);
+int turn_on(vm_t *vm, char *code_file);
 int turn_off(vm_t *vm);
 
 #endif
