@@ -113,6 +113,7 @@ static void show_instruction(cpu_t *cpu)
     case XOR:
     case SHL:
     case SHR:
+    case LOAD:
     {
       if (cpu->inst->has_imm)
         sprintf(oper, "0x%04x", cpu->inst->imm);
@@ -167,4 +168,5 @@ static void init_names(void)
   inst_names[SHR] = "not";
   inst_names[HLT] = "hlt";
   inst_names[POP] = "pop";
+  inst_names[LOAD] = "load";
 }

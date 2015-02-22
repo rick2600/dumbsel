@@ -21,8 +21,11 @@
 #define SHR   13
 #define NOT   14
 
+#define LOAD  17
+
 #define POP   20
 #define HLT   35
+
 
 int isa_mov(vm_t *vm);
 int isa_ext(vm_t *vm);
@@ -41,6 +44,7 @@ int isa_xor(vm_t *vm);
 int isa_shl(vm_t *vm);
 int isa_shr(vm_t *vm);
 
+int isa_load(vm_t *vm);
 int isa_pop(vm_t *vm);
 int isa_hlt(vm_t *vm);
 

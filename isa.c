@@ -134,7 +134,39 @@ int isa_pop(vm_t *vm)
   return 1;
 }
 
+int isa_load(vm_t *vm)
+{
+  unsigned short int temp = vm->cpu->regs[vm->cpu->inst->rb];
 
+  if (vm->cpu->inst->has_imm)
+    temp += vm->cpu->inst->imm;
+  else
+    temp += vm->cpu->regs[vm->cpu->inst->rc];
+
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->mem_bus->addr = temp;
+  vm->mem_bus->control = REQ_READ;
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (RES_READ_OK)
+  {
+    temp = vm->mem_bus->data & 0xffff;
+    
+    if (vm->cpu->inst->byte_mode)
+      vm->cpu->regs[vm->cpu->inst->ra] = \
+      (vm->cpu->regs[vm->cpu->inst->ra] & 0xff00)|(0xff & temp);
+    else
+      vm->cpu->regs[vm->cpu->inst->ra] = temp;
+  }
+  else
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+}
 
 
 static int alu(vm_t *vm, int operands)
