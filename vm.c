@@ -74,6 +74,9 @@ int turn_on(vm_t *vm)
   *(int *)&vm->ram[28] = SWAP_UINT32(0x20d00000);
   // not r3
   *(int *)&vm->ram[32] = SWAP_UINT32(0x38300000);
+  //decb r0
+  *(int *)&vm->ram[36] = SWAP_UINT32(0x21000000);
+  
 
   // This is a test
 
