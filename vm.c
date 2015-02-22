@@ -167,6 +167,7 @@ static int init_cpu(vm_t *vm)
   if (vm->cpu)  
     vm->cpu->inst = (inst_t *)malloc(sizeof(inst_t));
 
+  memset(vm->cpu->regs, 0, sizeof(vm->cpu->regs));
   memset(vm->cpu->isa, 0, sizeof(vm->cpu->isa));
 
   vm->cpu->isa[MOV] = isa_mov;
@@ -194,12 +195,12 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[STORE] = isa_store;
 
 
-
+/*
   // Test
   int i;
   for (i = 0; i < 16; i++)
     vm->cpu->regs[i] = i;
-
+*/
 
 
   printf("  CPU - %s\n", (vm->cpu && vm->cpu->inst) ? "OK" : "ERR");

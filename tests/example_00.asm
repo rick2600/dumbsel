@@ -1,3 +1,5 @@
+mov r4,4
+mov r5,5
 mov ts,0xaabb
 ext r13,ts
 exts r13,ts
