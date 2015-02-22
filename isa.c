@@ -166,6 +166,7 @@ int isa_load(vm_t *vm)
     //TODO: write a recovery code?
   }
   pthread_mutex_unlock(&vm->mem_bus->lock);
+  return 1;
 }
 
 int isa_store(vm_t *vm)
@@ -191,6 +192,7 @@ int isa_store(vm_t *vm)
     //TODO: write a recovery code?
   }
   pthread_mutex_unlock(&vm->mem_bus->lock);
+  return 1;
 }
 
 
