@@ -46,8 +46,9 @@ static void show_registers(cpu_t *cpu)
     printf("r%02d: 0x%04x  ", i, cpu->regs[i]);
   printf("\n");
 
-  for (i = 8; i < 16; i++)
+  for (i = 8; i < 14; i++)
     printf("r%02d: 0x%04x  ", i, cpu->regs[i]);
+  printf("bs:  0x%04x  ts:  0x%04x  \n", cpu->regs[14], cpu->regs[15]);
 
   printf("\npc: 0x%04x\n\n", cpu->pc - 4);
 }
@@ -69,6 +70,10 @@ static void show_memory(ram_t *ram)
 static void show_instruction(cpu_t *cpu)
 {
   char oper[16];
+  char *regs[] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8",
+    "r9", "r10", "r11", "r12", "r13", "bs", "ts"
+  };
 
   printf("Instruction:\n");
   printf("0x%04x -> ", cpu->pc - 4);
@@ -88,12 +93,12 @@ static void show_instruction(cpu_t *cpu)
       if (cpu->inst->has_imm)
         sprintf(oper, "0x%04x", cpu->inst->imm);
       else
-        sprintf(oper, "r%d", cpu->inst->rb);
+        sprintf(oper, "%s", regs[cpu->inst->rb]);
 
-      printf("%s%s r%d,%s\n", 
+      printf("%s%s %s,%s\n", 
         inst_names[cpu->inst->op], 
         (cpu->inst->byte_mode) ? "b":"",
-        cpu->inst->ra,
+        regs[cpu->inst->ra],
         oper
       );
     }
@@ -112,13 +117,13 @@ static void show_instruction(cpu_t *cpu)
       if (cpu->inst->has_imm)
         sprintf(oper, "0x%04x", cpu->inst->imm);
       else
-        sprintf(oper, "r%d", cpu->inst->rc);
+        sprintf(oper, "%s", regs[cpu->inst->rc]);
 
-      printf("%s%s r%d,r%d,%s\n", 
+      printf("%s%s %s,%s,%s\n", 
         inst_names[cpu->inst->op],
         (cpu->inst->byte_mode) ? "b":"",
-        cpu->inst->ra,
-        cpu->inst->rb,
+        regs[cpu->inst->ra],
+        regs[cpu->inst->rb],
         oper
       );
     }
@@ -128,10 +133,10 @@ static void show_instruction(cpu_t *cpu)
     case DEC:
     case NOT:
     {
-      printf("%s%s r%d\n",
+      printf("%s%s %s\n",
         inst_names[cpu->inst->op], 
         (cpu->inst->byte_mode) ? "b":"",
-        cpu->inst->ra
+        regs[cpu->inst->ra]
       );
     }
     break;
