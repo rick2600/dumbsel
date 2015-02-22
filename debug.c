@@ -87,6 +87,11 @@ static void show_instruction(cpu_t *cpu)
     case SUB:
     case MUL:
     case DIV:
+    case OR:
+    case AND:
+    case XOR:
+    case SHL:
+    case SHR:
     {
       if (cpu->inst->has_imm)
         sprintf(oper, "0x%04x", cpu->inst->imm);
@@ -115,7 +120,7 @@ static void show_instruction(cpu_t *cpu)
     }
     break;
 
-    default: printf("inv\n"); break;
+    default: printf("inv (%02x) (0x%08x)\n", cpu->inst->op, cpu->ir); break;
   }
   
 }
@@ -133,4 +138,9 @@ static void init_names(void)
   inst_names[INC] = "inc";
   inst_names[DEC] = "dec";
   inst_names[NOT] = "not";
+  inst_names[OR] = "or";
+  inst_names[XOR] = "xor";
+  inst_names[AND] = "and";
+  inst_names[SHL] = "shl";
+  inst_names[SHR] = "not";
 }
