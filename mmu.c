@@ -25,6 +25,7 @@ void *mmu_service(void *args)
     }
     pthread_mutex_unlock(&vm->mem_bus->lock);
   }
+  return NULL;
 }
 
 static void mmu_read(vm_t *vm)

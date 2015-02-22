@@ -61,6 +61,7 @@ int turn_on(vm_t *vm, char *code_file)
     exit(EXIT_FAILURE);
   }
 
+
   pthread_join(cpu_thread, NULL);
   pthread_join(mmu_thread, NULL);
 

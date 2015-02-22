@@ -14,19 +14,28 @@ static void init_names(void);
 int init;
 char *inst_names[64];
 
-void run_debugger(vm_t *vm)
+void run_debugger(vm_t *vm, int r, int m, int i, int stop)
 {
   if (!init)
     init_names();
 
   printf("\n\n");
-  show_registers(vm->cpu);
-  show_memory(vm->ram);
+  if (r)
+    show_registers(vm->cpu);
+
+  if (m)
+    show_memory(vm->ram);
+
+  if (i)
   show_instruction(vm->cpu);
 
-  printf("-> ");
-  getchar();
+  if(stop)
+  {
+    printf("-> ");
+    getchar();
+  }
 }
+
 
 
 static void show_registers(cpu_t *cpu)

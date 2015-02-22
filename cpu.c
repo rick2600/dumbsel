@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define SHOW_REGISTER 1
+#define SHOW_MEMORY   1
+#define SHOW_INSTRUCTION 1
+#define STOP 0
+
 static void cpu_fetch(vm_t *vm);
 static void cpu_decode(vm_t *vm);
 static void cpu_execute(vm_t *vm);
@@ -19,15 +24,16 @@ void *cpu_uc(void *args)
   {
     if (vm->cpu->halt)
       break;
-    
+
     cpu_fetch(vm);
     cpu_decode(vm);
 
     if (vm->debug_mode)
-      run_debugger(vm);
+      run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, 1);
 
     cpu_execute(vm);
   }
+  return NULL;
 }
 
 
