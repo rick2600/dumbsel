@@ -1,6 +1,7 @@
 #include "isa.h"
 #include "vm.h"
 #include <stdio.h>
+#include <unistd.h>
 
 static int alu(vm_t *vm, int operands);
 
@@ -107,6 +108,34 @@ int isa_hlt(vm_t *vm)
   vm->cpu->halt = 1;
   return 1;
 }
+
+int isa_pop(vm_t *vm)
+{
+  unsigned short int temp;
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->control = REQ_READ;
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (RES_READ_OK)
+  {
+    temp = vm->mem_bus->data & 0xffff;
+    vm->cpu->regs[vm->cpu->inst->ra] = temp ;
+    vm->cpu->regs[15] += 2;
+  }
+  else
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  return 1;
+}
+
+
+
 
 static int alu(vm_t *vm, int operands)
 {

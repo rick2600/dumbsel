@@ -132,6 +132,7 @@ static void show_instruction(cpu_t *cpu)
     case INC:
     case DEC:
     case NOT:
+    case POP:
     {
       printf("%s%s %s\n",
         inst_names[cpu->inst->op], 
@@ -165,4 +166,5 @@ static void init_names(void)
   inst_names[SHL] = "shl";
   inst_names[SHR] = "not";
   inst_names[HLT] = "hlt";
+  inst_names[POP] = "pop";
 }

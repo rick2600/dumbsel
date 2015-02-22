@@ -188,6 +188,8 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[NOT] = isa_not;
 
   vm->cpu->isa[HLT] = isa_hlt;
+  vm->cpu->isa[POP] = isa_pop;
+
 
 
   // Test
