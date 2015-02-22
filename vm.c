@@ -186,6 +186,7 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[SHR] = isa_shr;
   vm->cpu->isa[NOT] = isa_not;
 
+  vm->cpu->isa[HLT] = isa_hlt;
 
 
   // Test

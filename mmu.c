@@ -10,8 +10,13 @@ void *mmu_service(void *args)
 {
   vm_t *vm = (vm_t *)args;
   while(1)
-  {
+  {  
     pthread_mutex_lock(&vm->mem_bus->lock);
+    if (vm->cpu->halt)
+    {
+      pthread_mutex_unlock(&vm->mem_bus->lock);
+      break;  
+    }
     switch(vm->mem_bus->control)
     {
       case REQ_READ: mmu_read(vm); break;

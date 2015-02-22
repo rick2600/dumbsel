@@ -12,8 +12,14 @@ static void cpu_execute(vm_t *vm);
 void *cpu_uc(void *args)
 {
   vm_t *vm = (vm_t *)args;
+
+  vm->cpu->halt = 0;
+
   while(1)
   {
+    if (vm->cpu->halt)
+      break;
+    
     cpu_fetch(vm);
     cpu_decode(vm);
 

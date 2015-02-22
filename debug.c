@@ -65,6 +65,13 @@ static void show_instruction(cpu_t *cpu)
   printf("0x%04x -> ", cpu->pc - 4);
   switch(cpu->inst->op)
   {
+
+    case HLT:
+    {
+      printf("%s\n", inst_names[HLT]);
+    }
+    break;
+
     case MOV:
     case EXT:
     case EXTS:
@@ -143,4 +150,5 @@ static void init_names(void)
   inst_names[AND] = "and";
   inst_names[SHL] = "shl";
   inst_names[SHR] = "not";
+  inst_names[HLT] = "hlt";
 }

@@ -102,6 +102,10 @@ int isa_shr(vm_t *vm)
   return alu(vm, 2);
 }
 
+int isa_hlt(vm_t *vm)
+{
+  vm->cpu->halt = 1;
+}
 
 static int alu(vm_t *vm, int operands)
 {

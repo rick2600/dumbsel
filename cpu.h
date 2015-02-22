@@ -26,6 +26,7 @@ typedef struct
   unsigned short int temp;
   unsigned char flags;
   unsigned char status;
+  unsigned char halt;
   inst_t *inst;
 
 } cpu_t;
