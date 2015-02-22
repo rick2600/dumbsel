@@ -1,10 +1,10 @@
-mov r15,0xaabb
-ext r13,r15
-exts r13,r15
+mov ts,0xaabb
+ext r13,ts
+exts r13,ts
 add r3,r4,r5
 add r3,r4,0x1122
 sub r3,r4,0x0001
-inc r15
+inc ts
 dec r13
 not r3
 decb r0
