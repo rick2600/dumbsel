@@ -152,7 +152,7 @@ int isa_load(vm_t *vm)
   if (RES_READ_OK)
   {
     temp = vm->mem_bus->data & 0xffff;
-    
+
     if (vm->cpu->inst->byte_mode)
       vm->cpu->regs[vm->cpu->inst->ra] = \
       (vm->cpu->regs[vm->cpu->inst->ra] & 0xff00)|(0xff & temp);
@@ -160,6 +160,31 @@ int isa_load(vm_t *vm)
       vm->cpu->regs[vm->cpu->inst->ra] = temp;
   }
   else
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+}
+
+int isa_store(vm_t *vm)
+{
+  unsigned short int temp = vm->cpu->regs[vm->cpu->inst->rb];
+
+  if (vm->cpu->inst->has_imm)
+    temp += vm->cpu->inst->imm;
+  else
+    temp += vm->cpu->regs[vm->cpu->inst->rc];
+
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->mem_bus->data = vm->cpu->regs[vm->cpu->inst->ra];
+  vm->mem_bus->addr = temp;
+  vm->mem_bus->control = (vm->cpu->inst->byte_mode) ? REQ_WRITE_B : REQ_WRITE_W;
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (!RES_WRITE_OK)
   {
     fprintf(stderr, "Bus Error\n");
     turn_off(vm);

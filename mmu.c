@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 static void mmu_read(vm_t *vm);
-static void mmu_write(vm_t *vm);
+static void mmu_write(vm_t *vm, unsigned int mode);
 
 void *mmu_service(void *args)
 {
@@ -20,7 +20,8 @@ void *mmu_service(void *args)
     switch(vm->mem_bus->control)
     {
       case REQ_READ: mmu_read(vm); break;
-      case REQ_WRITE: mmu_write(vm); break;
+      case REQ_WRITE_W: mmu_write(vm, REQ_WRITE_W); break;
+      case REQ_WRITE_B: mmu_write(vm, REQ_WRITE_B); break;
       default: break;
     }
     pthread_mutex_unlock(&vm->mem_bus->lock);
@@ -40,15 +41,31 @@ static void mmu_read(vm_t *vm)
 
 }
 
-static void mmu_write(vm_t *vm)
+static void mmu_write(vm_t *vm, unsigned int mode)
 {
   unsigned short int value;
-  if (vm->mem_bus->addr < RAM_SIZE)
-  {
-    value = (unsigned short int)vm->mem_bus->data;
-    *(unsigned short int *)&vm->ram[vm->mem_bus->addr] = value;
-    vm->mem_bus->control = RES_WRITE_OK;
+
+  if (mode == REQ_WRITE_W)
+  {   
+    if (vm->mem_bus->addr < (RAM_SIZE-2))
+    {
+      value = (unsigned short int)vm->mem_bus->data;
+      *(unsigned short int *)&vm->ram[vm->mem_bus->addr] = value;
+      vm->mem_bus->control = RES_WRITE_OK;
+    }
+    else
+      vm->mem_bus->control = RES_WRITE_ERR;
   }
   else
-    vm->mem_bus->control = RES_WRITE_ERR;
+  {
+    if (vm->mem_bus->addr < (RAM_SIZE-1))
+    {
+      value = (unsigned char)vm->mem_bus->data;
+      *(unsigned char *)&vm->ram[vm->mem_bus->addr] = value;
+      vm->mem_bus->control = RES_WRITE_OK;
+    }
+    else
+      vm->mem_bus->control = RES_WRITE_ERR;
+  }
+
 }

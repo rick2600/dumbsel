@@ -191,6 +191,7 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[POP] = isa_pop;
 
   vm->cpu->isa[LOAD] = isa_load;
+  vm->cpu->isa[STORE] = isa_store;
 
 
 

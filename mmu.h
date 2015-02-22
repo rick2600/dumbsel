@@ -6,7 +6,8 @@
 typedef enum
 {
   REQ_READ,
-  REQ_WRITE,
+  REQ_WRITE_W,
+  REQ_WRITE_B,
   RES_READ_OK,
   RES_READ_ERR,
   RES_WRITE_OK,

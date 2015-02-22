@@ -74,11 +74,4 @@ static void cpu_execute(vm_t *vm)
 {
   if (vm->cpu->isa[vm->cpu->inst->op])
     vm->cpu->isa[vm->cpu->inst->op](vm);
-  /*
-  else
-  {
-    fprintf(stderr, "instruction not implemented! (pc: %04x, op: %02x)\n", 
-      vm->cpu->pc-4, vm->cpu->inst->op);
-  }
-  */
 }
