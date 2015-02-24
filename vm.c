@@ -149,6 +149,7 @@ vm_t *create_vm(void)
 static int init_io_bus(vm_t *vm)
 {
   vm->io_bus = (io_bus_t *)malloc(sizeof(io_bus_t));
+  memset(vm->io_bus, 0, sizeof(io_bus_t));
   printf("  I/O BUS - %s\n", (vm->io_bus) ? "OK" : "ERR");
   return (vm->io_bus) ? 1 : 0;
 }
@@ -156,6 +157,7 @@ static int init_io_bus(vm_t *vm)
 static int init_mem_bus(vm_t *vm)
 {
   vm->mem_bus = (mem_bus_t *)malloc(sizeof(mem_bus_t));
+  memset(vm->mem_bus, 0, sizeof(mem_bus_t));
   printf("  MEM BUS - %s\n", (vm->mem_bus) ? "OK" : "ERR");
   return (vm->mem_bus) ? 1 : 0;
 }
@@ -163,6 +165,7 @@ static int init_mem_bus(vm_t *vm)
 static int init_cpu(vm_t *vm)
 {
   vm->cpu = (cpu_t *)malloc(sizeof(cpu_t));
+  memset(vm->cpu, 0, sizeof(cpu_t));
   
   if (vm->cpu)  
     vm->cpu->inst = (inst_t *)malloc(sizeof(inst_t));
@@ -209,8 +212,9 @@ static int init_cpu(vm_t *vm)
 
 static int init_ram(vm_t *vm)
 {
-  vm->ram = (ram_t *)malloc(sizeof(ram_t) * RAM_SIZE);  
-  printf("  RAM (0x%x bytes) - %s\n", 
-    (unsigned int)sizeof(ram_t) * RAM_SIZE, (vm->ram) ? "OK" : "ERR");
+  unsigned int size = (unsigned int)sizeof(ram_t) * RAM_SIZE;
+  vm->ram = (ram_t *)malloc(size);
+  memset(vm->ram, 0, size);
+  printf("  RAM (0x%x bytes) - %s\n", size, (vm->ram) ? "OK" : "ERR");
   return (vm->ram) ? 1 : 0;
 }
