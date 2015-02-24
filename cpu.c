@@ -29,7 +29,8 @@ void *cpu_uc(void *args)
     cpu_decode(vm);
 
     if (vm->debug_mode)
-      run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, 1);
+      //run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, !STOP);
+      run_debugger2(vm, !STOP);
 
     cpu_execute(vm);
   }

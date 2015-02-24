@@ -20,7 +20,7 @@ static off_t getfsize(const char *filename);
 int turn_on(vm_t *vm, char *code_file)
 {
 
-  pthread_t cpu_thread, mmu_thread, io_thread;
+  pthread_t cpu_thread, mmu_thread;//, io_thread;
 
   printf("Turning on...\n");
   if (!init_io_bus(vm) || !init_mem_bus(vm) || !init_cpu(vm) || !init_ram(vm))
@@ -210,6 +210,7 @@ static int init_cpu(vm_t *vm)
 static int init_ram(vm_t *vm)
 {
   vm->ram = (ram_t *)malloc(sizeof(ram_t) * RAM_SIZE);  
-  printf("  RAM (0x%x bytes) - %s\n", sizeof(ram_t) * RAM_SIZE, (vm->ram) ? "OK" : "ERR");
+  printf("  RAM (0x%x bytes) - %s\n", 
+    (unsigned int)sizeof(ram_t) * RAM_SIZE, (vm->ram) ? "OK" : "ERR");
   return (vm->ram) ? 1 : 0;
 }
