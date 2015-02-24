@@ -75,4 +75,6 @@ static void cpu_execute(vm_t *vm)
 {
   if (vm->cpu->isa[vm->cpu->inst->op])
     vm->cpu->isa[vm->cpu->inst->op](vm);
+  else
+    vm->cpu->halt = 1;
 }

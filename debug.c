@@ -199,7 +199,7 @@ static void disas(unsigned int raw_inst)
     }
     break;
 
-    default: printf("inv"); break;
+    default: printf("?"); break;
   }
 }
 

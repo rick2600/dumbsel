@@ -1,6 +1,6 @@
 mov r4,4
 mov r5,5
-mov ts,0xaabb
+mov ts,0x00bb
 ext r13,ts
 exts r13,ts
 add r3,r4,r5
