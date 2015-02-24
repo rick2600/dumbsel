@@ -6,7 +6,7 @@
 #include "io.h"
 #include "ram.h"
 
-#define RAM_SIZE 256
+#define RAM_SIZE 0x1000
 
 typedef struct 
 {  

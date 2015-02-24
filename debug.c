@@ -93,7 +93,8 @@ static void show_memory_and_disas(vm_t *vm)
 {
   int i, j, pos = 0;
   int inst, temp;
-  for (i = 0; i < RAM_SIZE; i+=16)
+  //for (i = 0; i < RAM_SIZE; i+=16)
+  for (i = 0; i < 256; i+=16)
   {
     printf("0x%04x: ", i);
     for (j = 0; j < 16; j++)
@@ -101,7 +102,7 @@ static void show_memory_and_disas(vm_t *vm)
 
     temp = showpc+(pos*4);
     inst = SWAP_UINT32(*(unsigned int *)&vm->ram[temp]);
-    printf(" | %s ", (temp == (vm->cpu->pc-4)) ? "pc: ": "    ");
+    printf(" |%s0x%04x | ", (temp == (vm->cpu->pc-4)) ? " pc: ": "     ", temp);
     
     disas(inst);
     pos++;
