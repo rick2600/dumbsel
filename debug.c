@@ -52,7 +52,7 @@ void run_debugger2(vm_t *vm, int stop)
   if (!init)
     init_names();
 
-  system("/usr/bin/clear");
+  //system("/usr/bin/clear");
   printf("Dumbsel Debugger:\n\n");
 
   show_registers(vm->cpu);

@@ -24,7 +24,7 @@ typedef struct
   unsigned short int pc; 
   unsigned int ir; 
   unsigned short int temp;
-  unsigned char flags;
+  unsigned short int flags;
   unsigned char status;
   unsigned char halt;
   inst_t *inst;
