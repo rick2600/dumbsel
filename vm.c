@@ -29,6 +29,7 @@ int turn_on(vm_t *vm, char *code_file)
     turn_off(vm);
     exit(EXIT_FAILURE);
   }
+  sleep(2);
 
   load_code(vm, code_file);
   vm->debug_mode = 1;

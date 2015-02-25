@@ -31,7 +31,7 @@ void handler(int sig)
 {  
   if (vm && vm->cpu)
   {
-    printf("\npress enter to exit\n");
+    printf("\npress any key to exit\n");
     vm->cpu->halt = 1;
   }
 }
