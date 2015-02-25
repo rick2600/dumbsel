@@ -205,7 +205,7 @@ static void disas(unsigned int raw_inst)
     default: printf("?"); break;
   }
 }
-
+/*
 static void show_registers(cpu_t *cpu)
 {
   int i;
@@ -224,6 +224,22 @@ static void show_registers(cpu_t *cpu)
     LT(cpu->flags) ? "LT ": "",
     GT(cpu->flags) ? "GT ": ""
   );
+}
+*/
+static void show_registers(cpu_t *cpu)
+{
+  int i;
+  char *regs[] = {
+    "r0 ", "r1 ", "r2 ", "r3 ", "r4 ", "r5 ", "r6 ", "r7 ", "r8 ",
+    "r9 ", "r10", "r11", "r12", "r13", "bs ", "ts "
+  };
+
+  for (i = 0; i < 8; i++)
+    printf("%s: 0x%04x (u: %5hu, s: %5hd)        %s: 0x%04x (u: %5hu, s: %5hd)\n", 
+      regs[i], cpu->regs[i], cpu->regs[i], (signed int)cpu->regs[i],
+      regs[i+8], cpu->regs[i+8], cpu->regs[i+8], (signed int)cpu->regs[i+8]);
+  printf("\n");
+
 }
 
 static void show_memory(ram_t *ram)
@@ -339,7 +355,7 @@ static void init_names(void)
   inst_names[XOR] = "xor";
   inst_names[AND] = "and";
   inst_names[SHL] = "shl";
-  inst_names[SHR] = "not";
+  inst_names[SHR] = "shr";
   inst_names[HLT] = "hlt";
   inst_names[POP] = "pop";
   inst_names[LOAD] = "load";

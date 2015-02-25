@@ -222,7 +222,6 @@ int isa_cmp(vm_t *vm)
     vm->cpu->flags = SET_GT(vm->cpu->flags);
   else
     vm->cpu->flags = CLR_GT(vm->cpu->flags);
-
   
   return 1;
 }
