@@ -145,6 +145,8 @@ static void disas(unsigned int raw_inst)
     case MOV:
     case EXT:
     case EXTS:
+    case CMP:
+    case CMPS:
     {
       if (has_imm)
         sprintf(oper, "0x%04x", imm);
@@ -216,7 +218,12 @@ static void show_registers(cpu_t *cpu)
     printf("r%02d: 0x%04x  ", i, cpu->regs[i]);
   printf("bs:  0x%04x  ts:  0x%04x  \n", cpu->regs[14], cpu->regs[15]);
 
-  printf("pc:  0x%04x\n", cpu->pc - 4);
+  printf("pc:  0x%04x  flags: 0x%04x [", cpu->pc - 4, cpu->flags);
+  printf(" %s%s%s]\n", 
+    ZF(cpu->flags) ? "ZF ": "",
+    LT(cpu->flags) ? "LT ": "",
+    GT(cpu->flags) ? "GT ": ""
+  );
 }
 
 static void show_memory(ram_t *ram)
@@ -337,4 +344,6 @@ static void init_names(void)
   inst_names[POP] = "pop";
   inst_names[LOAD] = "load";
   inst_names[STORE] = "store";
+  inst_names[CMP] = "cmp";
+  inst_names[CMPS] = "cmps";
 }

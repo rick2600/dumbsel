@@ -195,6 +195,45 @@ int isa_store(vm_t *vm)
   return 1;
 }
 
+int isa_cmp(vm_t *vm)
+{
+  unsigned short int op0 = vm->cpu->regs[vm->cpu->inst->ra], op1;
+  if (vm->cpu->inst->has_imm)
+    op1 = vm->cpu->inst->imm;
+  else
+    op1 = vm->cpu->regs[vm->cpu->inst->rb];
+
+  if (vm->cpu->inst->byte_mode)
+  {
+    op0 &= 0xff;
+    op1 &= 0xff;
+  }
+  if (op0 == op1)
+    vm->cpu->flags = SET_ZF(vm->cpu->flags);
+  else
+    vm->cpu->flags = CLR_ZF(vm->cpu->flags);
+  
+  if (op0 < op1)  
+    vm->cpu->flags = SET_LT(vm->cpu->flags);
+  else
+    vm->cpu->flags = CLR_LT(vm->cpu->flags);
+
+  if (op0 > op1)  
+    vm->cpu->flags = SET_GT(vm->cpu->flags);
+  else
+    vm->cpu->flags = CLR_GT(vm->cpu->flags);
+
+  
+  return 1;
+}
+
+
+int isa_cmps(vm_t *vm)
+{
+  return 1;
+}
+
+
 
 static int alu(vm_t *vm, int operands)
 {
