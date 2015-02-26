@@ -10,7 +10,7 @@ make
 ./dumbsel tests/example_00.bin
 ```
 
-# Documentation
+## Documentation
 
 ##### Registers
 Registers are 16 bits
