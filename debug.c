@@ -136,6 +136,18 @@ static void disas(unsigned int raw_inst)
   switch(op)
   {
 
+    case BR:
+    case BRE:
+    case BRNE:
+    {
+      if (has_imm)
+        sprintf(oper, "0x%04x", imm);
+      else
+        sprintf(oper, "%s", regs[rb]);
+      printf("%s %s", inst_names[op], oper);
+    }
+    break;
+
     case NOP:
     case HLT:
     {
@@ -276,6 +288,18 @@ static void show_instruction(cpu_t *cpu)
   switch(cpu->inst->op)
   {
 
+    case BR:
+    case BRE:
+    case BRNE:
+    {
+      if (cpu->inst->has_imm)
+        sprintf(oper, "0x%04x", cpu->inst->imm);
+      else
+        sprintf(oper, "%s", regs[cpu->inst->rb]);
+      printf("%s %s", inst_names[cpu->inst->op], oper);
+    }
+    break;
+
     case HLT:
     case NOP:
     {
@@ -371,4 +395,8 @@ static void init_names(void)
   inst_names[CMP] = "cmp";
   inst_names[CMPS] = "cmps";
   inst_names[NOP] = "nop";
+  inst_names[BR] = "br";
+  inst_names[BRE] = "bre";
+  inst_names[BRNE] = "brne";
+
 }

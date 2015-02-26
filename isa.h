@@ -22,7 +22,11 @@
 #define CMPS  16
 #define LOAD  17
 #define STORE 18
+#define PSH   19
 #define POP   20
+#define BR    21
+#define BRE   22
+#define BRNE  23
 #define NOP   33
 #define HLT   35
 
@@ -67,6 +71,11 @@ int isa_store(vm_t *vm);
 int isa_pop(vm_t *vm);
 int isa_hlt(vm_t *vm);
 int isa_nop(vm_t *vm);
+int isa_br(vm_t *vm);
+int isa_bre(vm_t *vm);
+int isa_brne(vm_t *vm);
+
+
 
 
 
