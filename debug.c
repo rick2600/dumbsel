@@ -88,7 +88,7 @@ static void show_stack(vm_t *vm)
   }
 }
 
-
+/*
 static void show_memory_and_disas(vm_t *vm)
 {
   int i, j, pos = 0;
@@ -113,6 +113,34 @@ static void show_memory_and_disas(vm_t *vm)
 
   if(ok2inc)
     showpc += 4;
+}
+*/
+
+static void show_memory_and_disas(vm_t *vm)
+{
+  int i, j, pos = vm->cpu->pc - 4;
+  int inst;
+  //for (i = 0; i < RAM_SIZE; i+=16)
+  for (i = 0; i < 256; i+=16)
+  {
+    printf("0x%04x: ", i);
+    for (j = 0; j < 16; j++)
+      printf("%02x ", vm->ram[j+i]);
+
+    inst = SWAP_UINT32(*(unsigned int *)&vm->ram[pos]);
+    printf(" |%s0x%04x | ", (pos == (vm->cpu->pc-4)) ? " pc: ": "     ", pos);
+    
+    disas(inst);
+    pos += 4;
+    printf("\n");
+  }
+  /*
+  if (!(vm->cpu->pc % 32))
+    ok2inc = 1;
+
+  if(ok2inc)
+    showpc += 4;
+  */
 }
 
 static void disas(unsigned int raw_inst)
