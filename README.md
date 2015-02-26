@@ -46,7 +46,7 @@ Registers are 16 bits
 - cmps ra,rb/imm : compares ra and rb/imm (signed)
 
 ###### Direct memory access
-- load ra,rb,rc/imm : ra = mem[rb+rc/immm]
+- load ra,rb,rc/imm : ra = mem[rb+rc/imm]
 - store ra,rb,rc/imm : mem[rb+rc/imm] = ra
 
 ###### Stack operation
