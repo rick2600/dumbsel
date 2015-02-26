@@ -197,7 +197,7 @@ int isa_store(vm_t *vm)
 
 int isa_cmp(vm_t *vm)
 {
-  unsigned short int op0 = vm->cpu->regs[vm->cpu->inst->ra], op1;
+  unsigned short int op0 = vm->cpu->regs[vm->cpu->inst->ra], op1, flags;
   if (vm->cpu->inst->has_imm)
     op1 = vm->cpu->inst->imm;
   else
@@ -208,20 +208,12 @@ int isa_cmp(vm_t *vm)
     op0 &= 0xff;
     op1 &= 0xff;
   }
-  if (op0 == op1)
-    vm->cpu->flags = SET_ZF(vm->cpu->flags);
-  else
-    vm->cpu->flags = CLR_ZF(vm->cpu->flags);
-  
-  if (op0 < op1)  
-    vm->cpu->flags = SET_LT(vm->cpu->flags);
-  else
-    vm->cpu->flags = CLR_LT(vm->cpu->flags);
 
-  if (op0 > op1)  
-    vm->cpu->flags = SET_GT(vm->cpu->flags);
-  else
-    vm->cpu->flags = CLR_GT(vm->cpu->flags);
+  flags = vm->cpu->flags;
+  flags = (op0 == op1) ? SET_ZF(flags) : CLR_ZF(flags);
+  flags = (op0 < op1)  ? SET_LT(flags) : CLR_LT(flags);
+  flags = (op0 > op1)  ? SET_GT(flags) : CLR_GT(flags);
+  vm->cpu->flags = flags;
   
   return 1;
 }
@@ -229,6 +221,33 @@ int isa_cmp(vm_t *vm)
 
 int isa_cmps(vm_t *vm)
 {
+  signed short int op0, op1;
+  signed char op0b, op1b;
+  unsigned short int flags;
+
+  op0 = (signed short int)vm->cpu->regs[vm->cpu->inst->ra];
+
+  if (vm->cpu->inst->has_imm)
+    op1 = (signed short int)vm->cpu->inst->imm;
+  else
+    op1 = (signed short int)vm->cpu->regs[vm->cpu->inst->rb];
+
+  flags = vm->cpu->flags;
+  if (vm->cpu->inst->byte_mode)
+  {
+    op0b = (signed char)op0;
+    op1b = (signed char)op1;
+    flags = (op0b == op1b) ? SET_ZF(flags) : CLR_ZF(flags);
+    flags = (op0b < op1b)   ? SET_LT(flags) : CLR_LT(flags);
+    flags = (op0b > op1b)   ? SET_GT(flags) : CLR_GT(flags);
+  }
+  else
+  {    
+    flags = (op0 == op1) ? SET_ZF(flags) : CLR_ZF(flags);
+    flags = (op0 < op1)  ? SET_LT(flags) : CLR_LT(flags);
+    flags = (op0 > op1)  ? SET_GT(flags) : CLR_GT(flags);  
+  }
+  vm->cpu->flags = flags;
   return 1;
 }
 
