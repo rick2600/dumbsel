@@ -22,8 +22,8 @@ Registers are 16 bits
 
 ###### Data movement
 - mov ra,rb/imm : - mov data to register
-- ext ra,rb/imm : extend byte to unsigned short
-- exts ra,rb/imm : extend byte to signed short
+- ext ra,rb/imm : extend least significant byte from rb/imm into ra (unsigned)
+- exts ra,rb/imm : extend least significant byte from rb/imm into ra (signed)
 
 ###### Arithmetic
 - add ra,rb,rc/imm : ra = rb + rc/imm
