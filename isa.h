@@ -68,6 +68,7 @@ int isa_cmps(vm_t *vm);
 int isa_load(vm_t *vm);
 int isa_store(vm_t *vm);
 
+int isa_psh(vm_t *vm);
 int isa_pop(vm_t *vm);
 int isa_hlt(vm_t *vm);
 int isa_nop(vm_t *vm);

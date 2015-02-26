@@ -136,6 +136,7 @@ static void disas(unsigned int raw_inst)
   switch(op)
   {
 
+    case PSH:
     case BR:
     case BRE:
     case BRNE:
@@ -143,7 +144,7 @@ static void disas(unsigned int raw_inst)
       if (has_imm)
         sprintf(oper, "0x%04x", imm);
       else
-        sprintf(oper, "%s", regs[rb]);
+        sprintf(oper, "%s", regs[ra]);
       printf("%s %s", inst_names[op], oper);
     }
     break;
@@ -291,6 +292,7 @@ static void show_instruction(cpu_t *cpu)
     case BR:
     case BRE:
     case BRNE:
+    case PSH:
     {
       if (cpu->inst->has_imm)
         sprintf(oper, "0x%04x", cpu->inst->imm);
@@ -389,6 +391,7 @@ static void init_names(void)
   inst_names[SHL] = "shl";
   inst_names[SHR] = "shr";
   inst_names[HLT] = "hlt";
+  inst_names[PSH] = "psh";
   inst_names[POP] = "pop";
   inst_names[LOAD] = "load";
   inst_names[STORE] = "store";
