@@ -3,35 +3,35 @@
 
 #include "vm.h"
 
-#define MOV   0
-#define EXT   1
-#define EXTS  2
-#define ADD   3
-#define SUB   4
-#define MUL   5
-#define DIV   6
-#define INC   7
-#define DEC   8
-#define OR    9
-#define AND   10
-#define XOR   11
-#define SHL   12
-#define SHR   13
-#define NOT   14
-#define CMP   15
-#define CMPS  16
-#define LOAD  17
-#define STORE 18
-#define PSH   19
-#define POP   20
-#define BR    21
-#define BRE   22
-#define BRNE  23
-#define BRG   24
-#define BRGE  25
-#define BRL   26
-#define BRLE  27
-#define NOP   33
+#define NOP   0
+#define MOV   1
+#define EXT   2
+#define EXTS  3
+#define ADD   4
+#define SUB   5
+#define MUL   6
+#define DIV   7
+#define INC   8
+#define DEC   9
+#define OR    10
+#define AND   11
+#define XOR   12
+#define SHL   13
+#define SHR   14
+#define NOT   15
+#define CMP   16
+#define CMPS  17
+#define LOAD  18
+#define STORE 19
+#define PSH   20
+#define POP   21
+#define BR    22
+#define BRE   23
+#define BRNE  24
+#define BRG   25
+#define BRGE  26
+#define BRL   27
+#define BRLE  28
 #define HLT   35
 
 

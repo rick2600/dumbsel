@@ -111,7 +111,6 @@ int isa_hlt(vm_t *vm)
 
 int isa_psh(vm_t *vm)
 {
-  unsigned short int temp;
   pthread_mutex_lock(&vm->mem_bus->lock);
   vm->cpu->regs[15] -= 2;
   
