@@ -23,6 +23,7 @@
 #define LOAD  17
 #define STORE 18
 #define POP   20
+#define NOP   33
 #define HLT   35
 
 
@@ -65,6 +66,7 @@ int isa_store(vm_t *vm);
 
 int isa_pop(vm_t *vm);
 int isa_hlt(vm_t *vm);
+int isa_nop(vm_t *vm);
 
 
 

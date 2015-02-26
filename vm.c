@@ -196,6 +196,7 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[CMPS] = isa_cmps;
 
   vm->cpu->isa[HLT] = isa_hlt;
+  vm->cpu->isa[NOP] = isa_nop;
   vm->cpu->isa[POP] = isa_pop;
 
   vm->cpu->isa[LOAD] = isa_load;

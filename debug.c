@@ -136,9 +136,10 @@ static void disas(unsigned int raw_inst)
   switch(op)
   {
 
+    case NOP:
     case HLT:
     {
-      printf("%s", inst_names[HLT]);
+      printf("%s", inst_names[op]);
     }
     break;
 
@@ -276,8 +277,9 @@ static void show_instruction(cpu_t *cpu)
   {
 
     case HLT:
+    case NOP:
     {
-      printf("%s\n", inst_names[HLT]);
+      printf("%s\n", inst_names[cpu->inst->op]);
     }
     break;
 
@@ -368,4 +370,5 @@ static void init_names(void)
   inst_names[STORE] = "store";
   inst_names[CMP] = "cmp";
   inst_names[CMPS] = "cmps";
+  inst_names[NOP] = "nop";
 }

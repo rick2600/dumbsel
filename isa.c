@@ -251,6 +251,11 @@ int isa_cmps(vm_t *vm)
   return 1;
 }
 
+int isa_nop(vm_t *vm)
+{
+  return 1;
+}
+
 
 
 static int alu(vm_t *vm, int operands)
