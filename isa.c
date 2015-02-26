@@ -320,6 +320,55 @@ int isa_brne(vm_t *vm)
   return 1;
 }
 
+int isa_brg(vm_t *vm)
+{
+  if (GT(vm->cpu->flags))
+  {
+    if (vm->cpu->inst->has_imm)
+      vm->cpu->pc += vm->cpu->inst->imm;
+    else
+      vm->cpu->pc = vm->cpu->regs[vm->cpu->inst->ra];
+  }
+  return 1;
+}
+
+int isa_brge(vm_t *vm)
+{
+  if (GT(vm->cpu->flags) || ZF(vm->cpu->flags))
+  {
+    if (vm->cpu->inst->has_imm)
+      vm->cpu->pc += vm->cpu->inst->imm;
+    else
+      vm->cpu->pc = vm->cpu->regs[vm->cpu->inst->ra];
+  }
+  return 1;
+}
+
+int isa_brl(vm_t *vm)
+{
+  if (LT(vm->cpu->flags))
+  {
+    if (vm->cpu->inst->has_imm)
+      vm->cpu->pc += vm->cpu->inst->imm;
+    else
+      vm->cpu->pc = vm->cpu->regs[vm->cpu->inst->ra];
+  }
+  return 1;
+}
+
+int isa_brle(vm_t *vm)
+{
+  if (LT(vm->cpu->flags) || ZF(vm->cpu->flags))
+  {
+    if (vm->cpu->inst->has_imm)
+      vm->cpu->pc += vm->cpu->inst->imm;
+    else
+      vm->cpu->pc = vm->cpu->regs[vm->cpu->inst->ra];
+  }
+  return 1;
+}
+
+
 
 static int alu(vm_t *vm, int operands)
 {

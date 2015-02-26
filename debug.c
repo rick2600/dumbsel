@@ -140,6 +140,10 @@ static void disas(unsigned int raw_inst)
     case BR:
     case BRE:
     case BRNE:
+    case BRG:
+    case BRGE:
+    case BRL:
+    case BRLE:
     {
       if (has_imm)
         sprintf(oper, "0x%04x", imm);
@@ -289,10 +293,14 @@ static void show_instruction(cpu_t *cpu)
   switch(cpu->inst->op)
   {
 
+    case PSH:
     case BR:
     case BRE:
     case BRNE:
-    case PSH:
+    case BRG:
+    case BRGE:
+    case BRL:
+    case BRLE:
     {
       if (cpu->inst->has_imm)
         sprintf(oper, "0x%04x", cpu->inst->imm);
@@ -401,5 +409,9 @@ static void init_names(void)
   inst_names[BR] = "br";
   inst_names[BRE] = "bre";
   inst_names[BRNE] = "brne";
+  inst_names[BRG] = "brg";
+  inst_names[BRGE] = "brge";
+  inst_names[BRL] = "brl";
+  inst_names[BRLE] = "brle";
 
 }

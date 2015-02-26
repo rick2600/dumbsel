@@ -27,6 +27,10 @@
 #define BR    21
 #define BRE   22
 #define BRNE  23
+#define BRG   24
+#define BRGE  25
+#define BRL   26
+#define BRLE  27
 #define NOP   33
 #define HLT   35
 
@@ -75,7 +79,10 @@ int isa_nop(vm_t *vm);
 int isa_br(vm_t *vm);
 int isa_bre(vm_t *vm);
 int isa_brne(vm_t *vm);
-
+int isa_brg(vm_t *vm);
+int isa_brge(vm_t *vm);
+int isa_brl(vm_t *vm);
+int isa_brle(vm_t *vm);
 
 
 
