@@ -32,7 +32,10 @@
 #define BRGE  26
 #define BRL   27
 #define BRLE  28
+#define CALL  32
+#define BACK  33
 #define HLT   35
+
 
 
 #define ZF(x) ((x) & 1)
@@ -83,6 +86,8 @@ int isa_brg(vm_t *vm);
 int isa_brge(vm_t *vm);
 int isa_brl(vm_t *vm);
 int isa_brle(vm_t *vm);
+int isa_call(vm_t *vm);
+int isa_back(vm_t *vm);
 
 
 

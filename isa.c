@@ -367,6 +367,58 @@ int isa_brle(vm_t *vm)
   return 1;
 }
 
+int isa_call(vm_t *vm)
+{
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->cpu->regs[15] -= 2;  
+
+  vm->mem_bus->data = vm->cpu->pc;
+  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->control = REQ_WRITE_W;
+
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (!RES_WRITE_OK)
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+
+  if (vm->cpu->inst->has_imm)
+    vm->cpu->pc += vm->cpu->inst->imm;
+  else
+    vm->cpu->pc = vm->cpu->regs[vm->cpu->inst->ra];
+
+  return 1;
+}
+
+int isa_back(vm_t *vm)
+{
+  unsigned short int temp;
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->control = REQ_READ;
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (RES_READ_OK)
+  {
+    temp = vm->mem_bus->data & 0xffff;
+    vm->cpu->pc = temp ;
+    vm->cpu->regs[15] += 2;
+  }
+  else
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  return 1;
+}
 
 
 static int alu(vm_t *vm, int operands)

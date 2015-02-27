@@ -172,6 +172,7 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     case BRGE:
     case BRL:
     case BRLE:
+    case CALL:
     {
       if (has_imm)
       {
@@ -188,6 +189,7 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     }
     break;
 
+    case BACK:
     case NOP:
     case HLT:
     {
@@ -448,5 +450,7 @@ static void init_names(void)
   inst_names[BRGE] = "brge";
   inst_names[BRL] = "brl";
   inst_names[BRLE] = "brle";
+  inst_names[CALL] = "call";
+  inst_names[BACK] = "back";
 
 }
