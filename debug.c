@@ -12,7 +12,7 @@ static void show_instruction(cpu_t *cpu);
 static void init_names(void);
 static void show_memory_and_disas(vm_t *vm);
 static void show_stack(vm_t *vm);
-static void disas(unsigned int raw_inst);
+static void disas(unsigned short int addr, unsigned int raw_inst);
 
 
 
@@ -130,7 +130,7 @@ static void show_memory_and_disas(vm_t *vm)
     inst = SWAP_UINT32(*(unsigned int *)&vm->ram[pos]);
     printf(" |%s0x%04x | ", (pos == (vm->cpu->pc-4)) ? " pc: ": "     ", pos);
     
-    disas(inst);
+    disas(pos+4, inst);
     pos += 4;
     printf("\n");
   }
@@ -143,7 +143,7 @@ static void show_memory_and_disas(vm_t *vm)
   */
 }
 
-static void disas(unsigned int raw_inst)
+static void disas(unsigned short int addr, unsigned int raw_inst)
 {
   unsigned int op = raw_inst >> 26;
   unsigned char has_imm = (raw_inst >> 25) & 1;
@@ -174,9 +174,16 @@ static void disas(unsigned int raw_inst)
     case BRLE:
     {
       if (has_imm)
-        sprintf(oper, "0x%04x", imm);
+      {
+        if (op != PSH)
+          sprintf(oper, "0x%04x", (addr + imm) & 0xfff);
+        else
+          sprintf(oper, "0x%04x", imm);
+      }
       else
         sprintf(oper, "%s", regs[ra]);
+
+
       printf("%s %s", inst_names[op], oper);
     }
     break;
