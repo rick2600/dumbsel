@@ -177,7 +177,7 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
       if (has_imm)
       {
         if (op != PSH)
-          sprintf(oper, "0x%04x", (addr + imm) & 0xfff);
+          sprintf(oper, "<0x%04x>", (addr + imm) & 0xfff);
         else
           sprintf(oper, "0x%04x", imm);
       }
