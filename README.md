@@ -57,6 +57,8 @@ Registers are 16 bits
 - br ra/imm : branches to pc+imm or branches to ra
 - bre ra/imm : branches to pc+imm or branches to ra if ZF is set
 - brne ra/imm : branches to pc+imm or branches to ra if ZF is clear
+- call ra/imm : save next instruction addr on stack and branches to pc+imm or branches to ra
+- back : pops the value on top of stack and branches 
 
 ###### Misc
 - nop : does nothing
