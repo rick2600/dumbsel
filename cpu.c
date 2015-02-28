@@ -14,7 +14,7 @@ static void cpu_fetch(vm_t *vm);
 static void cpu_decode(vm_t *vm);
 static void cpu_execute(vm_t *vm);
 
-static unsigned int fetch_from_cache(vm_t *vm, unsigned int *s);
+static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss);
 static void cache_instruction(vm_t *vm, unsigned int inst);
 static unsigned int fetch_from_mem(vm_t *vm);
 
@@ -47,11 +47,12 @@ void *cpu_uc(void *args)
 
 static void cpu_fetch(vm_t *vm)
 {
-  unsigned int instruction, cache_hit = 0;
-  instruction = fetch_from_cache(vm, &cache_hit);
-  if (!cache_hit)
+  unsigned int instruction, cache_miss = 0;
+  instruction = fetch_from_cache(vm, &cache_miss);
+
+  if (cache_miss)
   {
-    //printf("CACHE_MISS\n");
+//    printf("CACHE_MISSs\n");
     instruction = fetch_from_mem(vm);
     cache_instruction(vm, instruction);
   }
@@ -61,15 +62,14 @@ static void cpu_fetch(vm_t *vm)
   vm->cpu->ir = SWAP_UINT32(instruction);
 }
 
-static unsigned int fetch_from_cache(vm_t *vm, unsigned int *s)
+static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss)
 {
   int i;
   for (i = 0; i < 16; i++)
     if (vm->cpu->icache_addr[i] == vm->cpu->pc)
-    {
-      *s = 1;
       return vm->cpu->icache_data[i];
-    }
+    
+  *miss = 1;
   return 0;
 }
 
@@ -97,7 +97,8 @@ static unsigned int fetch_from_mem(vm_t *vm)
 
 static void cache_instruction(vm_t *vm, unsigned int inst)
 {
-  //printf("caching... %04x %08x at %d\n", vm->cpu->pc, inst, vm->cpu->icache_oldest);
+  //printf("caching... %04x %08x at %d\n", vm->cpu->pc, SWAP_UINT32(inst), vm->cpu->icache_oldest);
+
   vm->cpu->icache_addr[vm->cpu->icache_oldest] = vm->cpu->pc;
   vm->cpu->icache_data[vm->cpu->icache_oldest] = inst;
   vm->cpu->icache_oldest++;
