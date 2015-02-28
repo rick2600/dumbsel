@@ -52,12 +52,12 @@ static void cpu_fetch(vm_t *vm)
 
   if (cache_miss)
   {
-    //printf("CACHE_MISS\n");
+    printf("CACHE_MISS (caching...)\n");
     instruction = fetch_from_mem(vm);
     cache_instruction(vm, instruction);
   }
-  //else
-    //printf("CACHE_HIT\n");
+  else
+    printf("CACHE_HIT\n");
   vm->cpu->pc += 4;
   vm->cpu->ir = SWAP_UINT32(instruction);
 }
