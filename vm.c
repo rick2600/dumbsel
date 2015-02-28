@@ -214,6 +214,9 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[CALL] = isa_call;
   vm->cpu->isa[BACK] = isa_back;
 
+  vm->cpu->isa[LDFLG] = isa_ldflg;
+  vm->cpu->isa[STFLG] = isa_stflg;
+
 
 /*
   // Test

@@ -35,6 +35,8 @@
 #define CALL  32
 #define BACK  33
 #define HLT   35
+#define LDFLG 36
+#define STFLG 37
 
 
 
@@ -88,6 +90,8 @@ int isa_brl(vm_t *vm);
 int isa_brle(vm_t *vm);
 int isa_call(vm_t *vm);
 int isa_back(vm_t *vm);
+int isa_ldflg(vm_t *vm);
+int isa_stflg(vm_t *vm);
 
 
 

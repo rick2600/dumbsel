@@ -189,6 +189,8 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     }
     break;
 
+    case LDFLG:
+    case STFLG:
     case BACK:
     case NOP:
     case HLT:
@@ -452,5 +454,7 @@ static void init_names(void)
   inst_names[BRLE] = "brle";
   inst_names[CALL] = "call";
   inst_names[BACK] = "back";
+  inst_names[LDFLG] = "ldflg";
+  inst_names[STFLG] = "stflg";
 
 }
