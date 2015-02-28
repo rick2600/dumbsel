@@ -217,6 +217,8 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[LDFLG] = isa_ldflg;
   vm->cpu->isa[STFLG] = isa_stflg;
 
+  memset(vm->cpu->icache_addr, 0xff, sizeof(vm->cpu->icache_addr));
+  vm->cpu->icache_oldest = 0;
 
 /*
   // Test
