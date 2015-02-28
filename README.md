@@ -14,9 +14,13 @@ make
 
 ##### Registers
 Registers are 16 bits
-- r0 - r13
+- r0 (special register, may be used implicitly in some instructions, return value)
+- r1-r5 (params)
+- r6-13 (general purpose)
 - bs (base stack)
 - ts (top stack)
+- pc (program conter, not user accessible)
+- flags (execution status, see: ldflg/stflg)
 
 ##### Instructions
 
