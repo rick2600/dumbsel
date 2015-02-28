@@ -63,6 +63,8 @@ Registers are 16 bits
 ###### Misc
 - nop : does nothing
 - hlt : halt execution
+- ldflg : load flag into r0
+- stflg : store r0's content into flag
 
 
 
