@@ -12,6 +12,7 @@ make
 
 ## Documentation
 
+
 ##### Registers
 Registers are 16 bits
 - r0 (special register, may be used implicitly in some instructions, return value)
@@ -21,6 +22,10 @@ Registers are 16 bits
 - ts (top stack)
 - pc (program conter, not user accessible)
 - flags (execution status, see: ldflg/stflg)
+
+##### Cache
+There is an instruction cache that caches up to 16 recently executed instruction
+
 
 ##### Instructions
 

@@ -57,7 +57,6 @@ static void cpu_fetch(vm_t *vm)
   }
   //else
     //printf("CACHE_HIT\n");
-
   vm->cpu->pc += 4;
   vm->cpu->ir = SWAP_UINT32(instruction);
 }
