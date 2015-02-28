@@ -47,12 +47,12 @@ void *cpu_uc(void *args)
 
 static void cpu_fetch(vm_t *vm)
 {
-  unsigned int instruction, cache_miss = 0;
+  unsigned int instruction, cache_miss = 1;
   instruction = fetch_from_cache(vm, &cache_miss);
 
   if (cache_miss)
   {
-//    printf("CACHE_MISSs\n");
+    //printf("CACHE_MISS\n");
     instruction = fetch_from_mem(vm);
     cache_instruction(vm, instruction);
   }
@@ -67,9 +67,11 @@ static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss)
   int i;
   for (i = 0; i < 16; i++)
     if (vm->cpu->icache_addr[i] == vm->cpu->pc)
+    {
+      *miss = 0;
       return vm->cpu->icache_data[i];
-    
-  *miss = 1;
+    }
+
   return 0;
 }
 
