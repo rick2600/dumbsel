@@ -423,11 +423,13 @@ int isa_back(vm_t *vm)
 int isa_ldflg(vm_t *vm)
 {
   vm->cpu->regs[0] = vm->cpu->flags;
+  return 1;
 }
 
 int isa_stflg(vm_t *vm)
 {
   vm->cpu->flags = vm->cpu->regs[0];
+  return 1;
 }
 
 
