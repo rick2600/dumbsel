@@ -65,7 +65,7 @@ static void cpu_fetch(vm_t *vm)
 static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss)
 {
   int i;
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < ICACHE_SIZE; i++)
     if (vm->cpu->icache_addr[i] == vm->cpu->pc)
     {
       *miss = 0;

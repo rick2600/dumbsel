@@ -4,7 +4,7 @@
 #define SWAP_UINT16(x) (((x) >> 8) | ((x) << 8))
 #define SWAP_UINT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
 
-#define CACHE_MISS -1
+#define ICACHE_SIZE 16
 
 typedef struct
 {
@@ -31,8 +31,8 @@ typedef struct
   unsigned char status;
   unsigned char halt;
 
-  unsigned int icache_data[16];
-  unsigned int icache_addr[16];
+  unsigned int icache_data[ICACHE_SIZE];
+  unsigned int icache_addr[ICACHE_SIZE];
   unsigned char icache_oldest;
 
   unsigned int ir; 
