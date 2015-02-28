@@ -19,14 +19,17 @@ typedef struct
 
 typedef struct 
 {
+
   int (*isa[64])();
+
   unsigned short int regs[16];
   unsigned short int pc; 
-  unsigned int ir; 
   unsigned short int temp;
   unsigned short int flags;
   unsigned char status;
   unsigned char halt;
+
+  unsigned int ir; 
   inst_t *inst;
 
 } cpu_t;
