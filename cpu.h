@@ -19,11 +19,13 @@ typedef struct
 } inst_t;
 
 
+
 typedef struct 
 {
-
+  // instructions
   int (*isa[64])();
 
+  // context
   unsigned short int regs[16];
   unsigned short int pc; 
   unsigned short int temp;
@@ -31,12 +33,20 @@ typedef struct
   unsigned char status;
   unsigned char halt;
 
+  // cache
   unsigned int icache_data[ICACHE_SIZE];
   unsigned int icache_addr[ICACHE_SIZE];
   unsigned char icache_oldest;
 
+  // intruction decoding
   unsigned int ir; 
   inst_t *inst;
+
+  // task table
+  unsigned short int ttr;
+
+  // interruption handler table
+  unsigned short int ihtr;
 
 } cpu_t;
 
