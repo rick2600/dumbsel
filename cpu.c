@@ -66,7 +66,7 @@ static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss)
 {
   int i;
   for (i = 0; i < ICACHE_SIZE; i++)
-    if (vm->cpu->icache_addr[i] == vm->cpu->pc)
+    if (vm->cpu->icache_addr[i] == (unsigned int)vm->cpu->pc)
     {
       *miss = 0;
       return vm->cpu->icache_data[i];
