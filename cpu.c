@@ -17,15 +17,18 @@ static void cpu_execute(vm_t *vm);
 static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss);
 static void cache_instruction(vm_t *vm, unsigned int inst);
 static unsigned int fetch_from_mem(vm_t *vm);
+static void raise_interruption(vm_t *vm, cpu_int_t interruption);
 
 
 
 
 void *cpu_uc(void *args)
 {
+  int time_slice = 0;
   vm_t *vm = (vm_t *)args;
 
   vm->cpu->halt = 0;
+
 
   while(1)
   {
@@ -36,11 +39,18 @@ void *cpu_uc(void *args)
     cpu_decode(vm);
 
     if (vm->debug_mode)
-      //run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, !STOP);
       run_debugger2(vm, !STOP);
+      //run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, !STOP);
     //sleep(1);
-
     cpu_execute(vm);
+
+    
+    time_slice++;
+    if (time_slice == 5)
+    {
+      time_slice = 0;
+      raise_interruption(vm, INT_TIME_EXPIRATION);
+    }
   }
   return NULL;
 }
@@ -107,6 +117,18 @@ static void cache_instruction(vm_t *vm, unsigned int inst)
   if (vm->cpu->icache_oldest == 16)
     vm->cpu->icache_oldest = 0;
 }
+
+static void raise_interruption(vm_t *vm, cpu_int_t interruption)
+{
+  switch(interruption)
+  {
+    case INT_TIME_EXPIRATION:
+      printf("Interruption: INT_TIME_EXPIRATION\n");
+    break;
+    default: break;
+  }
+}
+
 
 /*
 static void cpu_fetch(vm_t *vm)

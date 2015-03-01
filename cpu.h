@@ -6,6 +6,12 @@
 
 #define ICACHE_SIZE 16
 
+typedef enum
+{
+  INT_TIME_EXPIRATION
+} cpu_int_t;
+
+
 typedef struct
 {
   unsigned int op; 
