@@ -496,7 +496,14 @@ static int alu(vm_t *vm, int operands)
   }
 
   if (vm->cpu->inst->byte_mode)
+  {
+    f = (res & 0x80) ? SET_SF(f) : CLR_SF(f);
     res = (vm->cpu->regs[vm->cpu->inst->ra] & 0xff00) | (res & 0xff);
+  }
+  else
+  {
+    f = (res & 0x8000) ? SET_SF(f) : CLR_SF(f);
+  }
   
   vm->cpu->regs[vm->cpu->inst->ra] = res;
 

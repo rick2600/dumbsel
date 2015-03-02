@@ -44,17 +44,22 @@
 #define LT(x) (((x) >> 1) & 1)
 #define GT(x) (((x) >> 2) & 1)
 #define CF(x) (((x) >> 3) & 1)
+#define SF(x) (((x) >> 4) & 1)
 
 #define SET_ZF(x) ((x) | 1)
 #define SET_LT(x) ((x) | 2)
 #define SET_GT(x) ((x) | 4)
 #define SET_CF(x) ((x) | 8)
+#define SET_SF(x) ((x) | 16)
+
 
 
 #define CLR_ZF(x) ((x) & ~1)
 #define CLR_LT(x) ((x) & ~2)
 #define CLR_GT(x) ((x) & ~4)
 #define CLR_CF(x) ((x) & ~8)
+#define CLR_SF(x) ((x) & ~16)
+
 
 
 int isa_mov(vm_t *vm);

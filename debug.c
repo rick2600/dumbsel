@@ -297,11 +297,12 @@ static void show_registers(cpu_t *cpu)
       regs[i+8], cpu->regs[i+8], cpu->regs[i+8], (signed int)cpu->regs[i+8]);
   printf("\n");
   printf("pc:  0x%04x  flags: 0x%04x [", cpu->pc - 4, cpu->flags);
-  printf(" %s%s%s%s]\n", 
+  printf(" %s%s%s%s%s]\n", 
     ZF(cpu->flags) ? "ZF ": "",
     LT(cpu->flags) ? "LT ": "",
     GT(cpu->flags) ? "GT ": "",
-    CF(cpu->flags) ? "CF ": ""
+    CF(cpu->flags) ? "CF ": "",
+    SF(cpu->flags) ? "SF ": ""
   );
 
 }
