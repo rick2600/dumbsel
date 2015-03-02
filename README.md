@@ -66,6 +66,10 @@ There is an instruction cache that caches up to 16 recently executed instruction
 - br ra/imm : branches to pc+imm or branches to ra
 - bre ra/imm : branches to pc+imm or branches to ra if ZF is set
 - brne ra/imm : branches to pc+imm or branches to ra if ZF is clear
+- brg ra/imm : branches to pc+imm or branches to ra if GT is set
+- brge ra/imm : branches to pc+imm or branches to ra if GT or ZF is set
+- brl ra/imm : branches to pc+imm or branches to ra if LT is set
+- brle ra/imm : branches to pc+imm or branches to ra if LT or ZF is set
 - call ra/imm : save next instruction addr on stack and branches to pc+imm or branches to ra
 - back : pops the value on top of stack and branches 
 
