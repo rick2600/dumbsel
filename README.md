@@ -48,7 +48,7 @@ There is an instruction cache that caches up to 16 recently executed instruction
 - xor ra,rb,rc/imm : ra = rb ^ rc/imm
 - shl ra,rb,rc/imm : ra = rb << rc/imm
 - shr ra,rb,rc/imm : ra = rb >> rc/imm
-- not ra : ra = -ra
+- not ra : ra = ~ra
 
 ###### Comparison
 - cmp ra,rb/imm : compares ra and rb/imm (unsigned)
