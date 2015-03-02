@@ -436,6 +436,9 @@ int isa_stflg(vm_t *vm)
 static int alu(vm_t *vm, int operands)
 {
   unsigned short int op0, op1, res;
+  unsigned short int cf, f = vm->cpu->flags;
+
+
   if (operands == 2)
   {
     op0 = vm->cpu->regs[vm->cpu->inst->rb];
@@ -460,7 +463,21 @@ static int alu(vm_t *vm, int operands)
       case OR:  res = op0 | op1; break;
       case XOR: res = op0 ^ op1; break;
       case AND: res = op0 & op1; break;
-      case SHL: res = op0 << op1; break;
+      case SHL: 
+      {
+        //res = op0 << op1;
+        while(op1)
+        {
+          cf = (vm->cpu->inst->byte_mode) ? (op0 & 0x80) : (op0 & 0x8000);
+          printf("CF: %d\n", cf);
+
+          op0 <<= 1;
+          op1--;
+        }
+        res = op0;
+        f = (cf) ? SET_CF(f) : CLR_CF(f);
+      }
+      break;
       case SHR: res = op0 >> op1; break;
       default: break;
     }
@@ -484,6 +501,8 @@ static int alu(vm_t *vm, int operands)
     res = (vm->cpu->regs[vm->cpu->inst->ra] & 0xff00) | (res & 0xff);
   
   vm->cpu->regs[vm->cpu->inst->ra] = res;
+
+  vm->cpu->flags = f;
 
   return 1;
 }
