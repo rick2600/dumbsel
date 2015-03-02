@@ -469,8 +469,6 @@ static int alu(vm_t *vm, int operands)
         while(op1)
         {
           cf = (vm->cpu->inst->byte_mode) ? (op0 & 0x80) : (op0 & 0x8000);
-          printf("CF: %d\n", cf);
-
           op0 <<= 1;
           op1--;
         }
