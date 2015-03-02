@@ -436,7 +436,7 @@ int isa_stflg(vm_t *vm)
 static int alu(vm_t *vm, int operands)
 {
   unsigned short int op0, op1, res;
-  unsigned short int cf, f = vm->cpu->flags;
+  unsigned short int signb0, signb1, signb2, cf, f = vm->cpu->flags;
 
 
   if (operands == 2)
@@ -452,17 +452,73 @@ static int alu(vm_t *vm, int operands)
     {
       op0 &= 0xff;
       op1 &= 0xff;
+      signb0 = op0 & 0x80;
+      signb1 = op1 & 0x80;
+    }
+    else
+    {
+      signb0 = op0 & 0x8000;
+      signb1 = op1 & 0x8000;
     }
   
     switch(vm->cpu->inst->op)
     {
-      case ADD: res = op0 + op1; break;
-      case SUB: res = op0 - op1; break;
-      case DIV: res = op0 / op1; break;
-      case MUL: res = op0 * op1; break;
-      case OR:  res = op0 | op1; break;
-      case XOR: res = op0 ^ op1; break;
-      case AND: res = op0 & op1; break;
+      case ADD:
+      {
+        res = op0 + op1;
+        signb2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
+        printf("%x %x ->%x\n", signb0, signb1, signb2);
+        f = ((signb0 == signb1) && (signb0 != signb2)) ? SET_OF(f) : CLR_OF(f);
+      }
+      break;
+
+      case SUB:
+      {
+        res = op0 - op1;
+        signb2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
+        f = ((signb0 == signb1) && (signb0 != signb2)) ? SET_OF(f) : CLR_OF(f);
+      } 
+      break;
+
+      case DIV:
+      {
+        if (op1 != 0)
+        {
+          res = op0 / op1;
+        }
+        else
+        {
+          res = 0;
+          // raise exception
+        } 
+      }
+      break;
+
+      case MUL:
+      {
+        res = op0 * op1; 
+      }
+      break;
+
+      case OR:
+      {
+        f = CLR_CF(f);
+        res = op0 | op1;
+      } 
+      break;
+
+      case XOR:
+      {
+        res = op0 ^ op1;
+      }
+      break;
+
+      case AND:
+      {
+        res = op0 & op1;
+      }
+      break;
+
       case SHL: 
       {
         //res = op0 << op1;
@@ -476,7 +532,13 @@ static int alu(vm_t *vm, int operands)
         f = (cf) ? SET_CF(f) : CLR_CF(f);
       }
       break;
-      case SHR: res = op0 >> op1; break;
+
+      case SHR:
+      {
+        res = op0 >> op1; 
+      }
+      break;
+
       default: break;
     }
   }
@@ -490,7 +552,7 @@ static int alu(vm_t *vm, int operands)
     {
       case INC: res++; break;
       case DEC: res--; break;
-      case NOT: res = -res; break;
+      case NOT: res = ~res; break;
       default: break;
     }
   }
@@ -505,6 +567,9 @@ static int alu(vm_t *vm, int operands)
     f = (res & 0x8000) ? SET_SF(f) : CLR_SF(f);
   }
   
+  f = (res == 0) ? SET_ZF(f) : CLR_ZF(f);
+
+
   vm->cpu->regs[vm->cpu->inst->ra] = res;
 
   vm->cpu->flags = f;
