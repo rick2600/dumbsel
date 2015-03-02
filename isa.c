@@ -467,7 +467,6 @@ static int alu(vm_t *vm, int operands)
       {
         res = op0 + op1;
         signb2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
-        printf("%x %x ->%x\n", signb0, signb1, signb2);
         f = ((signb0 == signb1) && (signb0 != signb2)) ? SET_OF(f) : CLR_OF(f);
       }
       break;
