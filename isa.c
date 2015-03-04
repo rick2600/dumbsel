@@ -432,6 +432,56 @@ int isa_stflg(vm_t *vm)
   return 1;
 }
 
+int isa_ldccr(vm_t *vm)
+{
+  vm->cpu->regs[0] = vm->cpu->ccr;
+  return 1;
+}
+
+int isa_stccr(vm_t *vm)
+{
+  vm->cpu->ccr = vm->cpu->regs[0];
+  return 1;
+}
+
+int isa_ldicr(vm_t *vm)
+{
+  vm->cpu->regs[0] = vm->cpu->icr;
+  return 1;
+}
+
+int isa_sticr(vm_t *vm)
+{
+  vm->cpu->icr = vm->cpu->regs[0];
+  return 1;
+}
+
+int isa_ldtcr(vm_t *vm)
+{
+  vm->cpu->regs[0] = vm->cpu->tcr;
+  return 1;
+}
+
+int isa_sttcr(vm_t *vm)
+{
+  vm->cpu->tcr = vm->cpu->regs[0];
+  return 1;
+}
+
+
+
+int isa_di(vm_t *vm)
+{
+  vm->cpu->ccr = vm->cpu->ccr & 0xfffe;
+  return 1;
+}
+
+int isa_ei(vm_t *vm)
+{
+  vm->cpu->ccr = vm->cpu->ccr | 0x0001;
+  vm->cpu->time_slice = 0;
+  return 1;
+}
 
 static int alu(vm_t *vm, int operands)
 {

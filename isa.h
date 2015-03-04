@@ -37,6 +37,14 @@
 #define HLT   35
 #define LDFLG 36
 #define STFLG 37
+#define LDCCR 38
+#define STCCR 39
+#define LDICR 40
+#define STICR 41
+#define LDTCR 42
+#define STTCR 43
+#define DI    44
+#define EI    45
 
 
 
@@ -60,6 +68,13 @@
 #define CLR_CF(x) ((x) & ~8)
 #define CLR_SF(x) ((x) & ~16)
 #define CLR_OF(x) ((x) & ~32)
+
+
+#define CCR_INT_ENABLED(x) ((x) & 1)
+#define CCR_INT_ENABLE(x) ((x) | 1)
+#define CCR_INT_DISABLE(x) ((x) & ~1)
+
+
 
 
 int isa_mov(vm_t *vm);
@@ -100,6 +115,16 @@ int isa_call(vm_t *vm);
 int isa_back(vm_t *vm);
 int isa_ldflg(vm_t *vm);
 int isa_stflg(vm_t *vm);
+int isa_ldccr(vm_t *vm);
+int isa_stccr(vm_t *vm);
+
+int isa_ldicr(vm_t *vm);
+int isa_sticr(vm_t *vm);
+int isa_ldtcr(vm_t *vm);
+int isa_sttcr(vm_t *vm);
+
+int isa_di(vm_t *vm);
+int isa_ei(vm_t *vm);
 
 
 

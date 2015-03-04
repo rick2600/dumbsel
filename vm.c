@@ -174,6 +174,8 @@ static int init_cpu(vm_t *vm)
   memset(vm->cpu->regs, 0, sizeof(vm->cpu->regs));
   memset(vm->cpu->isa, 0, sizeof(vm->cpu->isa));
 
+  vm->cpu->ccr = CCR_INT_ENABLE(vm->cpu->ccr);
+
   vm->cpu->isa[MOV] = isa_mov;
   vm->cpu->isa[EXT] = isa_ext;
   vm->cpu->isa[EXTS] = isa_exts;
@@ -216,6 +218,15 @@ static int init_cpu(vm_t *vm)
 
   vm->cpu->isa[LDFLG] = isa_ldflg;
   vm->cpu->isa[STFLG] = isa_stflg;
+  vm->cpu->isa[LDCCR] = isa_ldccr;
+  vm->cpu->isa[STCCR] = isa_stccr;
+  vm->cpu->isa[LDICR] = isa_ldicr;
+  vm->cpu->isa[STICR] = isa_sticr;
+  vm->cpu->isa[LDTCR] = isa_ldtcr;
+  vm->cpu->isa[STTCR] = isa_sttcr;
+
+  vm->cpu->isa[DI] = isa_di;
+  vm->cpu->isa[EI] = isa_ei;
 
   memset(vm->cpu->icache_addr, 0xff, sizeof(vm->cpu->icache_addr));
   vm->cpu->icache_oldest = 0;

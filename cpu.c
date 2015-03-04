@@ -24,11 +24,11 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption);
 
 void *cpu_uc(void *args)
 {
-  int time_slice = 0;
+ 
   vm_t *vm = (vm_t *)args;
-
+  
+  vm->cpu->time_slice = 0;
   vm->cpu->halt = 0;
-
 
   while(1)
   {
@@ -45,10 +45,10 @@ void *cpu_uc(void *args)
     cpu_execute(vm);
 
     
-    time_slice++;
-    if (time_slice == 5)
+    vm->cpu->time_slice++;
+    if (vm->cpu->time_slice == 5)
     {
-      time_slice = 0;
+      vm->cpu->time_slice = 0;
       raise_interruption(vm, INT_TIME_EXPIRATION);
     }
   }
@@ -120,10 +120,34 @@ static void cache_instruction(vm_t *vm, unsigned int inst)
 
 static void raise_interruption(vm_t *vm, cpu_int_t interruption)
 {
+  unsigned short int handler;
+
+  if (!(vm->cpu->ccr & 1))
+    return;
+
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->mem_bus->addr = vm->cpu->icr + (interruption * sizeof(unsigned short)); 
+  vm->mem_bus->control = REQ_READ; 
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (RES_READ_OK)
+    handler = vm->mem_bus->data;
+  else
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+
+
   switch(interruption)
   {
     case INT_TIME_EXPIRATION:
-      printf("Interruption: INT_TIME_EXPIRATION\n");
+      printf("Interruption: INT_TIME_EXPIRATION (handler: %04x)\n", handler);
+      vm->cpu->pc = handler;
     break;
     default: break;
   }

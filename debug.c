@@ -189,6 +189,14 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     }
     break;
 
+    case LDICR:
+    case STICR:
+    case LDTCR:
+    case STTCR:
+    case DI:
+    case EI:
+    case LDCCR:
+    case STCCR:
     case LDFLG:
     case STFLG:
     case BACK:
@@ -296,7 +304,8 @@ static void show_registers(cpu_t *cpu)
       regs[i], cpu->regs[i], cpu->regs[i], (signed int)cpu->regs[i],
       regs[i+8], cpu->regs[i+8], cpu->regs[i+8], (signed int)cpu->regs[i+8]);
   printf("\n");
-  printf("pc:  0x%04x  flags: 0x%04x [", cpu->pc - 4, cpu->flags);
+  printf("pc:  0x%04x    ccr: 0x%04x    "\
+    "icr: 0x%04x    tcr: 0x%04x    flags: 0x%04x [", cpu->pc - 4, cpu->ccr, cpu->icr, cpu->tcr, cpu->flags);
   printf(" %s%s%s%s%s%s]\n", 
     ZF(cpu->flags) ? "ZF ": "",
     LT(cpu->flags) ? "LT ": "",
@@ -459,5 +468,14 @@ static void init_names(void)
   inst_names[BACK] = "back";
   inst_names[LDFLG] = "ldflg";
   inst_names[STFLG] = "stflg";
+  inst_names[LDCCR] = "ldccr";
+  inst_names[STCCR] = "stccr";
+  inst_names[LDICR] = "ldicr";
+  inst_names[STICR] = "sticr";
+  inst_names[LDTCR] = "ldtcr";
+  inst_names[STTCR] = "sttcr";
+  inst_names[DI] = "di";
+  inst_names[EI] = "ei";
+
 
 }

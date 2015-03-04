@@ -36,7 +36,6 @@ typedef struct
   unsigned short int pc; 
   unsigned short int temp;
   unsigned short int flags;
-  unsigned char status;
   unsigned char halt;
 
   // cache
@@ -48,11 +47,16 @@ typedef struct
   unsigned int ir; 
   inst_t *inst;
 
-  // task table
-  unsigned short int ttr;
+  // task control register
+  unsigned short int tcr;
 
-  // interruption handler table
-  unsigned short int ihtr;
+  // interruption control register
+  unsigned short int icr;
+
+  // cpu control register
+  unsigned short int ccr;
+
+  unsigned char time_slice;
 
 } cpu_t;
 
