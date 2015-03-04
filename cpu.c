@@ -45,12 +45,14 @@ void *cpu_uc(void *args)
     //sleep(1);
     cpu_execute(vm);
 
-    
-    vm->cpu->time_slice++;
+    if (CCR_INT_ENABLED(vm->cpu->ccr))
+      vm->cpu->time_slice++;
+
     if (vm->cpu->time_slice == 5)
     {
       vm->cpu->time_slice = 0;
-      raise_interruption(vm, INT_TIME_EXPIRATION);
+      if (CCR_INT_ENABLED(vm->cpu->ccr))
+        raise_interruption(vm, INT_TIME_EXPIRATION);
     }
   }
   return NULL;
@@ -123,7 +125,7 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
 {
   unsigned short int handler;
 
-  if (!(vm->cpu->ccr & 1))
+  if (CCR_INT_DISABLE(vm->cpu->ccr))
     return;
 
   pthread_mutex_lock(&vm->mem_bus->lock);
@@ -143,12 +145,14 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
   }
   pthread_mutex_unlock(&vm->mem_bus->lock);
 
-
   switch(interruption)
   {
     case INT_TIME_EXPIRATION:
+    {
       printf("Interruption: INT_TIME_EXPIRATION (handler: %04x)\n", handler);
+      vm->cpu->time_slice = 0;
       //vm->cpu->pc = handler;
+    }
     break;
     default: break;
   }

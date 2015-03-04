@@ -80,6 +80,7 @@
 
 
 
+int __isa_psh(vm_t *vm, unsigned short v);
 
 int isa_mov(vm_t *vm);
 int isa_ext(vm_t *vm);

@@ -136,6 +136,26 @@ int isa_psh(vm_t *vm)
   return 1;
 }
 
+int __isa_psh(vm_t *vm, unsigned short v)
+{
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  vm->cpu->regs[15] -= 2;
+  vm->mem_bus->data = v;
+  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->control = REQ_WRITE_W;
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+  usleep(2000);
+  pthread_mutex_lock(&vm->mem_bus->lock);
+  if (!RES_WRITE_OK)
+  {
+    fprintf(stderr, "Bus Error\n");
+    turn_off(vm);
+    //TODO: write a recovery code?
+  }
+  pthread_mutex_unlock(&vm->mem_bus->lock);
+
+  return 1;
+}
 
 int isa_pop(vm_t *vm)
 {
