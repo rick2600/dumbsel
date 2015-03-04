@@ -105,7 +105,7 @@ int isa_shr(vm_t *vm)
 
 int isa_hlt(vm_t *vm)
 {
-  vm->cpu->halt = 1;
+  vm->cpu->ccr = CCR_SET_HALT(vm->cpu->ccr);
   return 1;
 }
 

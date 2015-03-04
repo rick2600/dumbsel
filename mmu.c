@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "isa.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,7 +13,7 @@ void *mmu_service(void *args)
   while(1)
   {  
     pthread_mutex_lock(&vm->mem_bus->lock);
-    if (vm->cpu->halt)
+    if (CCR_HALT(vm->cpu->ccr))
     {
       pthread_mutex_unlock(&vm->mem_bus->lock);
       break;  

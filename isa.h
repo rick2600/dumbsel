@@ -74,6 +74,10 @@
 #define CCR_INT_ENABLE(x) ((x) | 1)
 #define CCR_INT_DISABLE(x) ((x) & ~1)
 
+#define CCR_HALT(x) (((x) >> 1) & 1)
+#define CCR_SET_HALT(x) ((x) | 2)
+#define CCR_CLR_HALT(x) ((x) & ~2)
+
 
 
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include "vm.h"
+#include "isa.h"
 
 vm_t *vm;
 
@@ -32,6 +33,6 @@ void handler(int sig)
   if (vm && vm->cpu)
   {
     printf("\npress any key to exit\n");
-    vm->cpu->halt = 1;
+    vm->cpu->ccr = CCR_HALT(vm->cpu->ccr);
   }
 }

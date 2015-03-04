@@ -36,7 +36,6 @@ typedef struct
   unsigned short int pc; 
   unsigned short int temp;
   unsigned short int flags;
-  unsigned char halt;
 
   // cache
   unsigned int icache_data[ICACHE_SIZE];

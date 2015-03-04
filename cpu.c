@@ -1,6 +1,7 @@
 #include "vm.h"
 #include "cpu.h"
 #include "debug.h"
+#include "isa.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -28,11 +29,11 @@ void *cpu_uc(void *args)
   vm_t *vm = (vm_t *)args;
   
   vm->cpu->time_slice = 0;
-  vm->cpu->halt = 0;
+  vm->cpu->ccr = CCR_CLR_HALT(vm->cpu->ccr);
 
   while(1)
   {
-    if (vm->cpu->halt)
+    if (CCR_HALT(vm->cpu->ccr))
       break;
 
     cpu_fetch(vm);
@@ -147,7 +148,7 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
   {
     case INT_TIME_EXPIRATION:
       printf("Interruption: INT_TIME_EXPIRATION (handler: %04x)\n", handler);
-      vm->cpu->pc = handler;
+      //vm->cpu->pc = handler;
     break;
     default: break;
   }
@@ -194,5 +195,5 @@ static void cpu_execute(vm_t *vm)
   if (vm->cpu->isa[vm->cpu->inst->op])
     vm->cpu->isa[vm->cpu->inst->op](vm);
   else
-    vm->cpu->halt = 1;
+    vm->cpu->ccr = CCR_SET_HALT(vm->cpu->ccr);
 }
