@@ -202,6 +202,9 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     case BACK:
     case NOP:
     case HLT:
+    case IBACK:
+    case PSHA:
+    case POPA:
     {
       printf("%s", inst_names[op]);
     }
@@ -305,7 +308,8 @@ static void show_registers(cpu_t *cpu)
       regs[i+8], cpu->regs[i+8], cpu->regs[i+8], (signed int)cpu->regs[i+8]);
   printf("\n");
   printf("pc:  0x%04x    ccr: 0x%04x    "\
-    "icr: 0x%04x    tcr: 0x%04x    flags: 0x%04x [", cpu->pc - 4, cpu->ccr, cpu->icr, cpu->tcr, cpu->flags);
+    "icr: 0x%04x    tcr: 0x%04x    acr: 0x%04x    flags: 0x%04x [", 
+      cpu->pc - 4, cpu->ccr, cpu->icr, cpu->tcr, cpu->acr, cpu->flags);
   printf(" %s%s%s%s%s%s]\n", 
     ZF(cpu->flags) ? "ZF ": "",
     LT(cpu->flags) ? "LT ": "",
@@ -476,6 +480,9 @@ static void init_names(void)
   inst_names[STTCR] = "sttcr";
   inst_names[DI] = "di";
   inst_names[EI] = "ei";
+  inst_names[IBACK] = "iback";
+  inst_names[PSHA] = "psha";
+  inst_names[POPA] = "popa";
 
 
 }

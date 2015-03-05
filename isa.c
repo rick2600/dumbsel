@@ -112,14 +112,15 @@ int isa_hlt(vm_t *vm)
 int isa_psh(vm_t *vm)
 {
   pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->cpu->regs[15] -= 2;
+  
   
   if (vm->cpu->inst->has_imm)
-    vm->mem_bus->data = vm->cpu->inst->imm;
+    vm->mem_bus->mdr = vm->cpu->inst->imm;
   else
-    vm->mem_bus->data = vm->cpu->regs[vm->cpu->inst->ra];
+    vm->mem_bus->mdr = vm->cpu->regs[vm->cpu->inst->ra];
 
-  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->cpu->regs[15] -= 2;
+  vm->mem_bus->mar = vm->cpu->regs[15];
   vm->mem_bus->control = REQ_WRITE_W;
 
   pthread_mutex_unlock(&vm->mem_bus->lock);
@@ -136,24 +137,75 @@ int isa_psh(vm_t *vm)
   return 1;
 }
 
-int __isa_psh(vm_t *vm, unsigned short v)
+int isa_psha(vm_t *vm)
 {
-  pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->cpu->regs[15] -= 2;
-  vm->mem_bus->data = v;
-  vm->mem_bus->addr = vm->cpu->regs[15];
-  vm->mem_bus->control = REQ_WRITE_W;
-  pthread_mutex_unlock(&vm->mem_bus->lock);
-  usleep(2000);
-  pthread_mutex_lock(&vm->mem_bus->lock);
-  if (!RES_WRITE_OK)
+  int i;  
+  for (i = 15; i >=0; i--)
   {
-    fprintf(stderr, "Bus Error\n");
-    turn_off(vm);
-    //TODO: write a recovery code?
+    pthread_mutex_lock(&vm->mem_bus->lock);
+    vm->mem_bus->mdr = vm->cpu->regs[i];
+    vm->cpu->regs[15] -= 2;
+    vm->mem_bus->mar = vm->cpu->regs[15];
+    vm->mem_bus->control = REQ_WRITE_W;
+    pthread_mutex_unlock(&vm->mem_bus->lock);
+    usleep(2000);
+    pthread_mutex_lock(&vm->mem_bus->lock);
+    if (!RES_WRITE_OK)
+    {
+      fprintf(stderr, "Bus Error\n");
+      turn_off(vm);
+      //TODO: write a recovery code?
+    }
+    pthread_mutex_unlock(&vm->mem_bus->lock);
   }
-  pthread_mutex_unlock(&vm->mem_bus->lock);
+  
+  return 1;
+}
 
+int isa_popa(vm_t *vm)
+{
+  int i;
+  unsigned short int temp;
+
+  for (i = 0; i < 15; i++)
+  {
+    pthread_mutex_lock(&vm->mem_bus->lock);
+    vm->mem_bus->mar = vm->cpu->regs[15];
+    vm->mem_bus->control = REQ_READ;
+    pthread_mutex_unlock(&vm->mem_bus->lock);
+    usleep(2000);
+    pthread_mutex_lock(&vm->mem_bus->lock);
+    if (RES_READ_OK)
+    {
+      temp = vm->mem_bus->mdr & 0xffff;
+      vm->cpu->regs[i] = temp ;
+      vm->cpu->regs[15] += 2;
+    }
+    else
+    {
+      fprintf(stderr, "Bus Error\n");
+      turn_off(vm);
+      //TODO: write a recovery code?
+    }
+    pthread_mutex_unlock(&vm->mem_bus->lock);
+
+  }
+  vm->cpu->regs[15] += 2;
+
+  return 1;
+}
+
+
+int isa_iback(vm_t *vm)
+{
+  int i;
+  for (i = 0; i < 16; i++)
+    vm->cpu->regs[i] = vm->cpu->_regs[i];
+
+  vm->cpu->pc = vm->cpu->_pc;
+  vm->cpu->flags = vm->cpu->_flags;
+  vm->cpu->ccr = CCR_INT_ENABLE(vm->cpu->ccr);
+  vm->cpu->time_slice = 0;
   return 1;
 }
 
@@ -161,14 +213,14 @@ int isa_pop(vm_t *vm)
 {
   unsigned short int temp;
   pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->mar = vm->cpu->regs[15];
   vm->mem_bus->control = REQ_READ;
   pthread_mutex_unlock(&vm->mem_bus->lock);
   usleep(2000);
   pthread_mutex_lock(&vm->mem_bus->lock);
   if (RES_READ_OK)
   {
-    temp = vm->mem_bus->data & 0xffff;
+    temp = vm->mem_bus->mdr & 0xffff;
     vm->cpu->regs[vm->cpu->inst->ra] = temp ;
     vm->cpu->regs[15] += 2;
   }
@@ -192,14 +244,14 @@ int isa_load(vm_t *vm)
     temp += vm->cpu->regs[vm->cpu->inst->rc];
 
   pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->mem_bus->addr = temp;
+  vm->mem_bus->mar = temp;
   vm->mem_bus->control = REQ_READ;
   pthread_mutex_unlock(&vm->mem_bus->lock);
   usleep(2000);
   pthread_mutex_lock(&vm->mem_bus->lock);
   if (RES_READ_OK)
   {
-    temp = vm->mem_bus->data & 0xffff;
+    temp = vm->mem_bus->mdr & 0xffff;
 
     if (vm->cpu->inst->byte_mode)
       vm->cpu->regs[vm->cpu->inst->ra] = \
@@ -227,8 +279,8 @@ int isa_store(vm_t *vm)
     temp += vm->cpu->regs[vm->cpu->inst->rc];
 
   pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->mem_bus->data = vm->cpu->regs[vm->cpu->inst->ra];
-  vm->mem_bus->addr = temp;
+  vm->mem_bus->mdr = vm->cpu->regs[vm->cpu->inst->ra];
+  vm->mem_bus->mar = temp;
   vm->mem_bus->control = (vm->cpu->inst->byte_mode) ? REQ_WRITE_B : REQ_WRITE_W;
   pthread_mutex_unlock(&vm->mem_bus->lock);
   usleep(2000);
@@ -392,8 +444,8 @@ int isa_call(vm_t *vm)
   pthread_mutex_lock(&vm->mem_bus->lock);
   vm->cpu->regs[15] -= 2;  
 
-  vm->mem_bus->data = vm->cpu->pc;
-  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->mdr = vm->cpu->pc;
+  vm->mem_bus->mar = vm->cpu->regs[15];
   vm->mem_bus->control = REQ_WRITE_W;
 
   pthread_mutex_unlock(&vm->mem_bus->lock);
@@ -419,14 +471,14 @@ int isa_back(vm_t *vm)
 {
   unsigned short int temp;
   pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->mem_bus->addr = vm->cpu->regs[15];
+  vm->mem_bus->mar = vm->cpu->regs[15];
   vm->mem_bus->control = REQ_READ;
   pthread_mutex_unlock(&vm->mem_bus->lock);
   usleep(2000);
   pthread_mutex_lock(&vm->mem_bus->lock);
   if (RES_READ_OK)
   {
-    temp = vm->mem_bus->data & 0xffff;
+    temp = vm->mem_bus->mdr & 0xffff;
     vm->cpu->pc = temp ;
     vm->cpu->regs[15] += 2;
   }

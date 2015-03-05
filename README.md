@@ -30,7 +30,7 @@ There is an instruction cache that caches up to 16 recently executed instruction
 ##### Instructions
 
 ###### Data movement
-- mov ra,rb/imm : - mov data to register
+- (0x01) mov ra,rb/imm : - mov data to register
 - ext ra,rb/imm : extend least significant byte from rb/imm into ra (unsigned)
 - exts ra,rb/imm : extend least significant byte from rb/imm into ra (signed)
 

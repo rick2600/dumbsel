@@ -32,9 +32,10 @@ void *mmu_service(void *args)
 
 static void mmu_read(vm_t *vm)
 {
-  if (vm->mem_bus->addr < RAM_SIZE)
+  unsigned short int paddr = vm->cpu->acr + vm->mem_bus->mar;
+  if (paddr < RAM_SIZE)
   {
-    vm->mem_bus->data = *(unsigned int *)&vm->ram[vm->mem_bus->addr];
+    vm->mem_bus->mdr = *(unsigned int *)&vm->ram[paddr];
     vm->mem_bus->control = RES_READ_OK;
   }
   else
@@ -45,13 +46,14 @@ static void mmu_read(vm_t *vm)
 static void mmu_write(vm_t *vm, unsigned int mode)
 {
   unsigned short int value;
+  unsigned short int paddr = vm->cpu->acr + vm->mem_bus->mar;
 
   if (mode == REQ_WRITE_W)
   {   
-    if (vm->mem_bus->addr < (RAM_SIZE-2))
+    if (paddr < (RAM_SIZE-2))
     {
-      value = (unsigned short int)vm->mem_bus->data;
-      *(unsigned short int *)&vm->ram[vm->mem_bus->addr] = value;
+      value = (unsigned short int)vm->mem_bus->mdr;
+      *(unsigned short int *)&vm->ram[paddr] = value;
       vm->mem_bus->control = RES_WRITE_OK;
     }
     else
@@ -59,10 +61,10 @@ static void mmu_write(vm_t *vm, unsigned int mode)
   }
   else
   {
-    if (vm->mem_bus->addr < (RAM_SIZE-1))
+    if (paddr < (RAM_SIZE-1))
     {
-      value = (unsigned char)vm->mem_bus->data;
-      *(unsigned char *)&vm->ram[vm->mem_bus->addr] = value;
+      value = (unsigned char)vm->mem_bus->mdr;
+      *(unsigned char *)&vm->ram[paddr] = value;
       vm->mem_bus->control = RES_WRITE_OK;
     }
     else

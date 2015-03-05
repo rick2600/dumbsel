@@ -20,8 +20,8 @@ typedef struct
 { 
   pthread_mutex_t lock;
   mem_control_bus_t control;
-  unsigned short int addr;
-  unsigned int data;
+  unsigned short int mar;
+  unsigned int mdr;
 } mem_bus_t;
 
 

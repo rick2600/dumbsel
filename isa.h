@@ -45,7 +45,9 @@
 #define STTCR 43
 #define DI    44
 #define EI    45
-
+#define IBACK 46
+#define PSHA  47
+#define POPA  48
 
 
 #define ZF(x) ((x) & 1)
@@ -70,13 +72,19 @@
 #define CLR_OF(x) ((x) & ~32)
 
 
-#define CCR_INT_ENABLED(x) ((x) & 1)
-#define CCR_INT_ENABLE(x) ((x) | 1)
-#define CCR_INT_DISABLE(x) ((x) & ~1)
+#define CCR_INT_ENABLED(x)     ((x) & 1)
+#define CCR_HALT(x)            (((x) >> 1) & 1)
+#define CCR_SUPERVISOR(x)      (((x) >> 2) & 1)
 
-#define CCR_HALT(x) (((x) >> 1) & 1)
-#define CCR_SET_HALT(x) ((x) | 2)
-#define CCR_CLR_HALT(x) ((x) & ~2)
+#define CCR_INT_ENABLE(x)      ((x) | 1)
+#define CCR_SET_HALT(x)        ((x) | 2)
+#define CCR_SET_SUPERVISOR(x)  ((x) | 4)
+
+
+#define CCR_INT_DISABLE(x)     ((x) & ~1)
+#define CCR_CLR_HALT(x)        ((x) & ~2)
+#define CCR_CLR_SUPERVISOR(x)  ((x) & ~4)
+
 
 
 
@@ -131,7 +139,10 @@ int isa_sttcr(vm_t *vm);
 int isa_di(vm_t *vm);
 int isa_ei(vm_t *vm);
 
+int isa_iback(vm_t *vm);
 
+int isa_psha(vm_t *vm);
+int isa_popa(vm_t *vm);
 
 
 

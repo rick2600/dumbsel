@@ -227,6 +227,10 @@ static int init_cpu(vm_t *vm)
 
   vm->cpu->isa[DI] = isa_di;
   vm->cpu->isa[EI] = isa_ei;
+  vm->cpu->isa[IBACK] = isa_iback;
+
+  vm->cpu->isa[PSHA] = isa_psha;
+  vm->cpu->isa[POPA] = isa_popa;
 
   memset(vm->cpu->icache_addr, 0xff, sizeof(vm->cpu->icache_addr));
   vm->cpu->icache_oldest = 0;
