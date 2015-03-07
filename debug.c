@@ -13,6 +13,7 @@ static void init_names(void);
 static void show_memory_and_disas(vm_t *vm);
 static void show_stack(vm_t *vm);
 static void disas(unsigned short int addr, unsigned int raw_inst);
+static void show_stack_and_registers(vm_t *vm);
 
 
 
@@ -68,6 +69,7 @@ void run_debugger2(vm_t *vm, int stop)
   printf("\n");
 
   show_stack(vm);
+  //show_stack_and_registers(vm);
 
   if(stop)
   {
@@ -76,17 +78,42 @@ void run_debugger2(vm_t *vm, int stop)
   }
 }
 
+static void show_stack_and_registers(vm_t *vm)
+{
+  int i, j;
+  char *regs[] = {
+    "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8 ",
+    "r9 ", "r10", "r11", "r12", "r13", "bs ", "ts "
+  };
+  char buf[128];
+  unsigned short int v;
+  for (i = 0, j = 0; i < 16; i+=2, j++)
+  {
+    v = *(unsigned short int *)&vm->ram[vm->cpu->regs[15]+i];
+    v &= 0xffff;
+
+    sprintf(buf, "%s: 0x%04x (u: %5hu, s: %5hd)  .  %s: 0x%04x (u: %5hu, s: %5hd)", 
+      regs[j], vm->cpu->regs[j], vm->cpu->regs[j], (signed int)vm->cpu->regs[j],
+      regs[j+8], vm->cpu->regs[j+8], vm->cpu->regs[j+8], (signed int)vm->cpu->regs[j+8]);
+
+
+    printf("ts+%02x: |0x%04x| 0x%04x |   %s\n", i, vm->cpu->regs[15]+i, v, buf);
+  }
+}
+
+
 static void show_stack(vm_t *vm)
 {
   int i;
   unsigned short int v;
-  for (i = 0; i < 16; i+=2)
+  for (i = 0; i < 20; i+=2)
   {
     v = *(unsigned short int *)&vm->ram[vm->cpu->regs[15]+i];
     v &= 0xffff;
     printf("ts+%02x: |0x%04x| 0x%04x\n", i, vm->cpu->regs[15]+i, v);
   }
 }
+
 
 /*
 static void show_memory_and_disas(vm_t *vm)
@@ -197,6 +224,8 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     case EI:
     case LDCCR:
     case STCCR:
+    case LDCTX:
+    case STCTX:
     case LDFLG:
     case STFLG:
     case BACK:
@@ -308,8 +337,8 @@ static void show_registers(cpu_t *cpu)
       regs[i+8], cpu->regs[i+8], cpu->regs[i+8], (signed int)cpu->regs[i+8]);
   printf("\n");
   printf("pc:  0x%04x    ccr: 0x%04x    "\
-    "icr: 0x%04x    tcr: 0x%04x    acr: 0x%04x    flags: 0x%04x [", 
-      cpu->pc - 4, cpu->ccr, cpu->icr, cpu->tcr, cpu->acr, cpu->flags);
+    "icr: 0x%04x    tcr: 0x%04x    acr: 0x%04x    t: %d    flags: 0x%04x [", 
+      cpu->pc - 4, cpu->ccr, cpu->icr, cpu->tcr, cpu->acr, cpu->time_slice, cpu->flags);
   printf(" %s%s%s%s%s%s]\n", 
     ZF(cpu->flags) ? "ZF ": "",
     LT(cpu->flags) ? "LT ": "",
@@ -483,6 +512,7 @@ static void init_names(void)
   inst_names[IBACK] = "iback";
   inst_names[PSHA] = "psha";
   inst_names[POPA] = "popa";
-
+  inst_names[LDCTX] = "ldctx";
+  inst_names[STCTX] = "stctx";
 
 }

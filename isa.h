@@ -32,6 +32,9 @@
 #define BRGE  26
 #define BRL   27
 #define BRLE  28
+
+#define LDCTX 30
+#define STCTX 31
 #define CALL  32
 #define BACK  33
 #define HLT   35
@@ -89,6 +92,9 @@
 
 
 int __isa_psh(vm_t *vm, unsigned short v);
+int cpu_w_mem(vm_t *vm, unsigned short int mar, unsigned int mdr, unsigned int m);
+int cpu_r_mem(vm_t *vm, unsigned short int mar, unsigned int *data);
+
 
 int isa_mov(vm_t *vm);
 int isa_ext(vm_t *vm);
@@ -135,6 +141,9 @@ int isa_ldicr(vm_t *vm);
 int isa_sticr(vm_t *vm);
 int isa_ldtcr(vm_t *vm);
 int isa_sttcr(vm_t *vm);
+
+int isa_ldctx(vm_t *vm);
+int isa_stctx(vm_t *vm);
 
 int isa_di(vm_t *vm);
 int isa_ei(vm_t *vm);

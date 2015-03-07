@@ -21,9 +21,7 @@ static void cache_instruction(vm_t *vm, unsigned int inst);
 static unsigned int fetch_from_mem(vm_t *vm);
 static void raise_interruption(vm_t *vm, cpu_int_t interruption);
 static void enter_inthandler(vm_t *vm);
-static void leave_inthandler(vm_t *vm);
 static void set_clean_context(vm_t *vm);
-
 
 
 
@@ -44,7 +42,7 @@ void *cpu_uc(void *args)
     cpu_fetch(vm);
     cpu_decode(vm);
 
-    if (vm->debug_mode)
+    if (vm->debug_mode && !CCR_SUPERVISOR(vm->cpu->ccr))
       run_debugger2(vm, !STOP);
       //run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, !STOP);
     //sleep(1);
@@ -55,9 +53,10 @@ void *cpu_uc(void *args)
 
     if (vm->cpu->time_slice == EXEC_QUANTUM)
     {
-      vm->cpu->time_slice = 0;
+      //vm->cpu->time_slice = 0;
       if (CCR_INT_ENABLED(vm->cpu->ccr))
         raise_interruption(vm, INT_TIME_EXPIRATION);
+      vm->cpu->time_slice = 0;
     }
   }
   return NULL;
@@ -70,12 +69,12 @@ static void cpu_fetch(vm_t *vm)
 
   if (cache_miss)
   {
-    printf("CACHE_MISS (caching...)\n");
+    //printf("CACHE_MISS (caching...)\n");
     instruction = fetch_from_mem(vm);
     cache_instruction(vm, instruction);
   }
-  else
-    printf("CACHE_HIT\n");
+  //else
+    //printf("CACHE_HIT\n");
   vm->cpu->pc += 4;
   vm->cpu->ir = SWAP_UINT32(instruction);
 }
@@ -129,69 +128,56 @@ static void cache_instruction(vm_t *vm, unsigned int inst)
 static void raise_interruption(vm_t *vm, cpu_int_t interruption)
 {
   unsigned short int handler;
+  unsigned int addr, data; 
 
   if (CCR_INT_DISABLE(vm->cpu->ccr))
     return;
 
-  pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->mem_bus->mar = vm->cpu->icr + (interruption * sizeof(unsigned short)); 
-  vm->mem_bus->control = REQ_READ; 
-  pthread_mutex_unlock(&vm->mem_bus->lock);
-  usleep(2000);
+  addr = vm->cpu->icr + (interruption * sizeof(unsigned short int));
+  if (cpu_r_mem(vm, addr, &data))
+  {
+    handler = data & 0xffff;
+    //enter_inthandler(vm);
+    //set_clean_context(vm);
 
-  pthread_mutex_lock(&vm->mem_bus->lock);
-  if (RES_READ_OK)
-    handler = vm->mem_bus->mdr;
+    switch(interruption)
+    {
+      case INT_TIME_EXPIRATION:
+      {
+        //vm->cpu->ccr = CCR_SET_SUPERVISOR(vm->cpu->ccr);
+        printf("Interruption: INT_TIME_EXPIRATION (handler: %04x)\n", handler);
+        //vm->cpu->pc = handler;
+      }
+      break;
+      default: break;
+    }
+
+  }
   else
   {
-    fprintf(stderr, "Bus Error\n");
-    turn_off(vm);
-    //TODO: write a recovery code?
-  }
-  pthread_mutex_unlock(&vm->mem_bus->lock);
-
-  //enter_inthandler(vm);
-  //set_clean_context(vm);
-  //vm->cpu->ccr = CCR_SET_SUPERVISOR(vm->cpu->ccr);
-
-  switch(interruption)
-  {
-    case INT_TIME_EXPIRATION:
-    {
-      printf("Interruption: INT_TIME_EXPIRATION (handler: %04x)\n", handler);      
-      //vm->cpu->pc = handler;
-    }
-    break;
-    default: break;
+    fprintf(stderr, "Bus error\n");
   }
 }
+
 
 static void enter_inthandler(vm_t *vm)
 {
   int i;
+
   for (i = 0; i < 16; i++)
     vm->cpu->_regs[i] = vm->cpu->regs[i];
 
   vm->cpu->_pc = vm->cpu->pc;
   vm->cpu->_flags = vm->cpu->flags;
-  vm->cpu->ccr = CCR_INT_DISABLE(vm->cpu->ccr);
+
 }
 
-static void leave_inthandler(vm_t *vm)
-{
-  int i;
-  for (i = 0; i < 16; i++)
-    vm->cpu->regs[i] = vm->cpu->_regs[i];
-
-  vm->cpu->pc = vm->cpu->_pc;
-  vm->cpu->flags = vm->cpu->_flags;
-  vm->cpu->time_slice = 0;
-}
 
 static void set_clean_context(vm_t *vm)
 {
   memset(vm->cpu->regs, 0, sizeof(vm->cpu->regs));
   vm->cpu->flags = 0;
+  vm->cpu->_flags = 0;
 }
 
 static void cpu_decode(vm_t *vm)

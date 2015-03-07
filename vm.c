@@ -225,6 +225,9 @@ static int init_cpu(vm_t *vm)
   vm->cpu->isa[LDTCR] = isa_ldtcr;
   vm->cpu->isa[STTCR] = isa_sttcr;
 
+  vm->cpu->isa[LDCTX] = isa_ldctx;
+  vm->cpu->isa[STCTX] = isa_stctx;
+
   vm->cpu->isa[DI] = isa_di;
   vm->cpu->isa[EI] = isa_ei;
   vm->cpu->isa[IBACK] = isa_iback;

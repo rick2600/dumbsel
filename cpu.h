@@ -5,7 +5,7 @@
 #define SWAP_UINT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
 
 #define ICACHE_SIZE 16
-#define EXEC_QUANTUM 5
+#define EXEC_QUANTUM 8
 
 typedef enum
 {
@@ -38,11 +38,11 @@ typedef struct
   unsigned short int temp;
   unsigned short int flags;
 
-  // backup for interrupt handler
+  // last task context when entered in supervisor mode
   unsigned short int _regs[16];
   unsigned short int _pc; 
-  unsigned short int _temp;
   unsigned short int _flags;
+
 
   // cache
   unsigned int icache_data[ICACHE_SIZE];
