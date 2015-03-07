@@ -53,6 +53,42 @@
 #define POPA  48
 
 
+#define ZF (vm->cpu->flags & 1)
+#define LT ((vm->cpu->flags >> 1) & 1)
+#define GT ((vm->cpu->flags >> 2) & 1)
+#define CF ((vm->cpu->flags >> 3) & 1)
+#define SF ((vm->cpu->flags >> 4) & 1)
+#define OF ((vm->cpu->flags >> 5) & 1)
+
+#define SET_ZF (vm->cpu->flags |= 1)
+#define SET_LT (vm->cpu->flags |= 2)
+#define SET_GT (vm->cpu->flags |= 4)
+#define SET_CF (vm->cpu->flags |= 8)
+#define SET_SF (vm->cpu->flags |= 16)
+#define SET_OF (vm->cpu->flags |= 32)
+
+#define CLR_ZF (vm->cpu->flags &= ~1)
+#define CLR_LT (vm->cpu->flags &= ~2)
+#define CLR_GT (vm->cpu->flags &= ~4)
+#define CLR_CF (vm->cpu->flags &= ~8)
+#define CLR_SF (vm->cpu->flags &= ~16)
+#define CLR_OF (vm->cpu->flags &= ~32)
+
+
+#define INTERRUPTION_ENABLED   (vm->cpu->ccr & 1)
+#define IN_HALT_STATE          ((vm->cpu->ccr >> 1) & 1)
+#define IN_SUPERVISOR_MODE     ((vm->cpu->ccr >> 2) & 1)
+
+#define ENABLE_INTERRUPTION    (vm->cpu->ccr |= 1)
+#define ENTER_HALT_STATE       (vm->cpu->ccr |= 2)
+#define ENTER_SUPERVISOR_MODE  (vm->cpu->ccr |= 4)
+
+#define DISABLE_INTERRUPTION   (vm->cpu->ccr &= ~1)
+#define LEAVE_HALT_STATE       (vm->cpu->ccr &= ~2)
+#define ENTER_USER_MODE        (vm->cpu->ccr &= ~4)
+
+
+/*
 #define ZF(x) ((x) & 1)
 #define LT(x) (((x) >> 1) & 1)
 #define GT(x) (((x) >> 2) & 1)
@@ -88,6 +124,9 @@
 #define CCR_CLR_HALT(x)        ((x) & ~2)
 #define CCR_CLR_SUPERVISOR(x)  ((x) & ~4)
 
+
+
+*/
 
 
 

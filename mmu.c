@@ -13,7 +13,7 @@ void *mmu_service(void *args)
   while(1)
   {  
     pthread_mutex_lock(&vm->mem_bus->lock);
-    if (CCR_HALT(vm->cpu->ccr))
+    if (IN_HALT_STATE)
     {
       pthread_mutex_unlock(&vm->mem_bus->lock);
       break;  

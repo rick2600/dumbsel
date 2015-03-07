@@ -105,7 +105,7 @@ int isa_shr(vm_t *vm)
 
 int isa_hlt(vm_t *vm)
 {
-  vm->cpu->ccr = CCR_SET_HALT(vm->cpu->ccr);
+  ENTER_HALT_STATE;
   return 1;
 }
 
@@ -259,7 +259,7 @@ int isa_store(vm_t *vm)
 
 int isa_cmp(vm_t *vm)
 {
-  unsigned short int op0 = vm->cpu->regs[vm->cpu->inst->ra], op1, flags;
+  unsigned short int op0 = vm->cpu->regs[vm->cpu->inst->ra], op1;
   if (vm->cpu->inst->has_imm)
     op1 = vm->cpu->inst->imm;
   else
@@ -271,11 +271,9 @@ int isa_cmp(vm_t *vm)
     op1 &= 0xff;
   }
 
-  flags = vm->cpu->flags;
-  flags = (op0 == op1) ? SET_ZF(flags) : CLR_ZF(flags);
-  flags = (op0 < op1)  ? SET_LT(flags) : CLR_LT(flags);
-  flags = (op0 > op1)  ? SET_GT(flags) : CLR_GT(flags);
-  vm->cpu->flags = flags;
+  (op0 == op1) ? SET_ZF : CLR_ZF;
+  (op0 < op1)  ? SET_LT : CLR_LT;
+  (op0 > op1)  ? SET_GT : CLR_GT;
   
   return 1;
 }
@@ -285,7 +283,6 @@ int isa_cmps(vm_t *vm)
 {
   signed short int op0, op1;
   signed char op0b, op1b;
-  unsigned short int flags;
 
   op0 = (signed short int)vm->cpu->regs[vm->cpu->inst->ra];
 
@@ -294,22 +291,21 @@ int isa_cmps(vm_t *vm)
   else
     op1 = (signed short int)vm->cpu->regs[vm->cpu->inst->rb];
 
-  flags = vm->cpu->flags;
   if (vm->cpu->inst->byte_mode)
   {
     op0b = (signed char)op0;
     op1b = (signed char)op1;
-    flags = (op0b == op1b) ? SET_ZF(flags) : CLR_ZF(flags);
-    flags = (op0b < op1b)   ? SET_LT(flags) : CLR_LT(flags);
-    flags = (op0b > op1b)   ? SET_GT(flags) : CLR_GT(flags);
+    (op0b == op1b) ? SET_ZF : CLR_ZF;
+    (op0b < op1b)  ? SET_LT : CLR_LT;
+    (op0b > op1b)  ? SET_GT : CLR_GT;
   }
   else
   {    
-    flags = (op0 == op1) ? SET_ZF(flags) : CLR_ZF(flags);
-    flags = (op0 < op1)  ? SET_LT(flags) : CLR_LT(flags);
-    flags = (op0 > op1)  ? SET_GT(flags) : CLR_GT(flags);  
+    (op0 == op1) ? SET_ZF : CLR_ZF;
+    (op0 < op1)  ? SET_LT : CLR_LT;
+    (op0 > op1)  ? SET_GT : CLR_GT;  
   }
-  vm->cpu->flags = flags;
+
   return 1;
 }
 
@@ -331,7 +327,7 @@ int isa_br(vm_t *vm)
 
 int isa_bre(vm_t *vm)
 {
-  if (ZF(vm->cpu->flags))
+  if (ZF)
   {
     if (vm->cpu->inst->has_imm)
       vm->cpu->pc += vm->cpu->inst->imm;
@@ -343,7 +339,7 @@ int isa_bre(vm_t *vm)
 
 int isa_brne(vm_t *vm)
 {
-  if (!ZF(vm->cpu->flags))
+  if (!ZF)
   {
     if (vm->cpu->inst->has_imm)
       vm->cpu->pc += vm->cpu->inst->imm;
@@ -355,7 +351,7 @@ int isa_brne(vm_t *vm)
 
 int isa_brg(vm_t *vm)
 {
-  if (GT(vm->cpu->flags))
+  if (GT)
   {
     if (vm->cpu->inst->has_imm)
       vm->cpu->pc += vm->cpu->inst->imm;
@@ -367,7 +363,7 @@ int isa_brg(vm_t *vm)
 
 int isa_brge(vm_t *vm)
 {
-  if (GT(vm->cpu->flags) || ZF(vm->cpu->flags))
+  if (GT || ZF)
   {
     if (vm->cpu->inst->has_imm)
       vm->cpu->pc += vm->cpu->inst->imm;
@@ -379,7 +375,7 @@ int isa_brge(vm_t *vm)
 
 int isa_brl(vm_t *vm)
 {
-  if (LT(vm->cpu->flags))
+  if (LT)
   {
     if (vm->cpu->inst->has_imm)
       vm->cpu->pc += vm->cpu->inst->imm;
@@ -391,7 +387,7 @@ int isa_brl(vm_t *vm)
 
 int isa_brle(vm_t *vm)
 {
-  if (LT(vm->cpu->flags) || ZF(vm->cpu->flags))
+  if (LT || ZF)
   {
     if (vm->cpu->inst->has_imm)
       vm->cpu->pc += vm->cpu->inst->imm;
@@ -505,7 +501,7 @@ int isa_ldctx(vm_t *vm)
     vm->cpu->regs[i] = data & 0xffff;
   }
 
-  vm->cpu->ccr = CCR_CLR_SUPERVISOR(vm->cpu->ccr);
+  ENTER_SUPERVISOR_MODE;
   vm->cpu->time_slice = 0;
   return 1;
 }
@@ -540,7 +536,7 @@ int isa_ei(vm_t *vm)
 static int alu(vm_t *vm, int operands)
 {
   unsigned short int op0, op1, res;
-  unsigned short int sign0, sign1, sign2, cf, f = vm->cpu->flags;
+  unsigned short int sign0, sign1, sign2, cf;
 
 
   if (operands == 2)
@@ -571,7 +567,7 @@ static int alu(vm_t *vm, int operands)
       {
         res = op0 + op1;
         sign2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
-        f = ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF(f) : CLR_OF(f);
+        ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF : CLR_OF;
       }
       break;
 
@@ -579,7 +575,7 @@ static int alu(vm_t *vm, int operands)
       {
         res = op0 - op1;
         sign2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
-        f = ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF(f) : CLR_OF(f);
+        ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF : CLR_OF;
       } 
       break;
 
@@ -589,7 +585,7 @@ static int alu(vm_t *vm, int operands)
         {
           res = op0 / op1;
           sign2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
-          f = ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF(f) : CLR_OF(f);
+          ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF : CLR_OF;
         }
         else
         {
@@ -603,13 +599,13 @@ static int alu(vm_t *vm, int operands)
       {
         res = op0 * op1; 
         sign2 = (vm->cpu->inst->byte_mode) ? (res & 0x80) : (res & 0x8000);
-        f = ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF(f) : CLR_OF(f);
+        ((sign0 == sign1) && (sign0 != sign2)) ? SET_OF : CLR_OF;
       }
       break;
 
       case OR:
       {
-        f = CLR_CF(f);
+        CLR_CF;
         res = op0 | op1;
       } 
       break;
@@ -636,7 +632,7 @@ static int alu(vm_t *vm, int operands)
           op1--;
         }
         res = op0;
-        f = (cf) ? SET_CF(f) : CLR_CF(f);
+        (cf) ? SET_CF : CLR_CF;
       }
       break;
 
@@ -666,21 +662,17 @@ static int alu(vm_t *vm, int operands)
 
   if (vm->cpu->inst->byte_mode)
   {
-    f = (res & 0x80) ? SET_SF(f) : CLR_SF(f);
+    (res & 0x80) ? SET_SF : CLR_SF;
     res = (vm->cpu->regs[vm->cpu->inst->ra] & 0xff00) | (res & 0xff);
   }
   else
   {
-    f = (res & 0x8000) ? SET_SF(f) : CLR_SF(f);
+    (res & 0x8000) ? SET_SF : CLR_SF;
   }
   
-  f = (res == 0) ? SET_ZF(f) : CLR_ZF(f);
-
+  (res == 0) ? SET_ZF : CLR_ZF;
 
   vm->cpu->regs[vm->cpu->inst->ra] = res;
-
-  vm->cpu->flags = f;
-
   return 1;
 }
 

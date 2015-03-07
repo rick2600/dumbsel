@@ -33,6 +33,6 @@ void handler(int sig)
   if (vm && vm->cpu)
   {
     printf("\npress any key to exit\n");
-    vm->cpu->ccr = CCR_HALT(vm->cpu->ccr);
+    ENTER_HALT_STATE;
   }
 }

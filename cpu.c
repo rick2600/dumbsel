@@ -32,29 +32,29 @@ void *cpu_uc(void *args)
   vm_t *vm = (vm_t *)args;
   
   vm->cpu->time_slice = 0;
-  vm->cpu->ccr = CCR_CLR_HALT(vm->cpu->ccr);
+
+  LEAVE_HALT_STATE;
 
   while(1)
   {
-    if (CCR_HALT(vm->cpu->ccr))
+    if (IN_HALT_STATE)
       break;
 
     cpu_fetch(vm);
     cpu_decode(vm);
 
-    if (vm->debug_mode && !CCR_SUPERVISOR(vm->cpu->ccr))
+    if (vm->debug_mode && !IN_SUPERVISOR_MODE)
       run_debugger2(vm, !STOP);
       //run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, !STOP);
     //sleep(1);
     cpu_execute(vm);
 
-    if (CCR_INT_ENABLED(vm->cpu->ccr))
+    if (INTERRUPTION_ENABLED)
       vm->cpu->time_slice++;
 
     if (vm->cpu->time_slice == EXEC_QUANTUM)
     {
-      //vm->cpu->time_slice = 0;
-      if (CCR_INT_ENABLED(vm->cpu->ccr))
+      if (INTERRUPTION_ENABLED)
         raise_interruption(vm, INT_TIME_EXPIRATION);
       vm->cpu->time_slice = 0;
     }
@@ -102,7 +102,7 @@ static unsigned int fetch_from_mem(vm_t *vm)
   usleep(2000);
 
   pthread_mutex_lock(&vm->mem_bus->lock);
-  if (RES_READ_OK)
+  if (vm->mem_bus->control == RES_READ_OK)
     data = vm->mem_bus->mdr;
   else
   {
@@ -129,9 +129,6 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
 {
   unsigned short int handler;
   unsigned int addr, data; 
-
-  if (CCR_INT_DISABLE(vm->cpu->ccr))
-    return;
 
   addr = vm->cpu->icr + (interruption * sizeof(unsigned short int));
   if (cpu_r_mem(vm, addr, &data))
@@ -196,5 +193,5 @@ static void cpu_execute(vm_t *vm)
   if (vm->cpu->isa[vm->cpu->inst->op])
     vm->cpu->isa[vm->cpu->inst->op](vm);
   else
-    vm->cpu->ccr = CCR_SET_HALT(vm->cpu->ccr);
+    ENTER_HALT_STATE;
 }

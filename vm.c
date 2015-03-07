@@ -174,7 +174,7 @@ static int init_cpu(vm_t *vm)
   memset(vm->cpu->regs, 0, sizeof(vm->cpu->regs));
   memset(vm->cpu->isa, 0, sizeof(vm->cpu->isa));
 
-  vm->cpu->ccr = CCR_INT_ENABLE(vm->cpu->ccr);
+  ENABLE_INTERRUPTION;
 
   vm->cpu->isa[MOV] = isa_mov;
   vm->cpu->isa[EXT] = isa_ext;

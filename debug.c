@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 
-static void show_registers(cpu_t *cpu);
+static void show_registers(vm_t *vm);
 static void show_memory(ram_t *ram);
 static void show_instruction(cpu_t *cpu);
 static void init_names(void);
@@ -31,7 +31,7 @@ void run_debugger(vm_t *vm, int r, int m, int i, int stop)
 
   printf("\n\n");
   if (r)
-    show_registers(vm->cpu);
+    show_registers(vm);
 
   if (m)
     show_memory(vm->ram);
@@ -56,7 +56,7 @@ void run_debugger2(vm_t *vm, int stop)
   //system("/usr/bin/clear");
   printf("Dumbsel Debugger:\n\n");
 
-  show_registers(vm->cpu);
+  show_registers(vm);
 
   for (a=0;a < 8; a++)
     printf("=============");
@@ -323,7 +323,7 @@ static void show_registers(cpu_t *cpu)
   );
 }
 */
-static void show_registers(cpu_t *cpu)
+static void show_registers(vm_t *vm)
 {
   int i;
   char *regs[] = {
@@ -333,19 +333,20 @@ static void show_registers(cpu_t *cpu)
 
   for (i = 0; i < 8; i++)
     printf("%s: 0x%04x (u: %5hu, s: %5hd)        %s: 0x%04x (u: %5hu, s: %5hd)\n", 
-      regs[i], cpu->regs[i], cpu->regs[i], (signed int)cpu->regs[i],
-      regs[i+8], cpu->regs[i+8], cpu->regs[i+8], (signed int)cpu->regs[i+8]);
+      regs[i], vm->cpu->regs[i], vm->cpu->regs[i], (signed int)vm->cpu->regs[i],
+      regs[i+8], vm->cpu->regs[i+8], vm->cpu->regs[i+8], (signed int)vm->cpu->regs[i+8]);
   printf("\n");
   printf("pc:  0x%04x    ccr: 0x%04x    "\
     "icr: 0x%04x    tcr: 0x%04x    acr: 0x%04x    t: %d    flags: 0x%04x [", 
-      cpu->pc - 4, cpu->ccr, cpu->icr, cpu->tcr, cpu->acr, cpu->time_slice, cpu->flags);
+      vm->cpu->pc - 4, vm->cpu->ccr, vm->cpu->icr, vm->cpu->tcr, 
+      vm->cpu->acr, vm->cpu->time_slice, vm->cpu->flags);
   printf(" %s%s%s%s%s%s]\n", 
-    ZF(cpu->flags) ? "ZF ": "",
-    LT(cpu->flags) ? "LT ": "",
-    GT(cpu->flags) ? "GT ": "",
-    CF(cpu->flags) ? "CF ": "",
-    SF(cpu->flags) ? "SF ": "",
-    OF(cpu->flags) ? "OF ": ""
+    ZF ? "ZF ": "",
+    LT ? "LT ": "",
+    GT ? "GT ": "",
+    CF ? "CF ": "",
+    SF ? "SF ": "",
+    OF ? "OF ": ""
   );
 
 }
