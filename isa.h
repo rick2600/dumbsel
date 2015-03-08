@@ -52,6 +52,7 @@
 #define PSHA  47
 #define POPA  48
 
+// FLAGS
 
 #define ZF (vm->cpu->flags & 1)
 #define LT ((vm->cpu->flags >> 1) & 1)
@@ -74,18 +75,23 @@
 #define CLR_SF (vm->cpu->flags &= ~16)
 #define CLR_OF (vm->cpu->flags &= ~32)
 
+// CCR - CPU CONTROL REGISTER
 
 #define INTERRUPTION_ENABLED   (vm->cpu->ccr & 1)
 #define IN_HALT_STATE          ((vm->cpu->ccr >> 1) & 1)
 #define IN_SUPERVISOR_MODE     ((vm->cpu->ccr >> 2) & 1)
+#define VIRTUAL_MODE_ENABLED    ((vm->cpu->ccr >> 3) & 1)
 
 #define ENABLE_INTERRUPTION    (vm->cpu->ccr |= 1)
 #define ENTER_HALT_STATE       (vm->cpu->ccr |= 2)
 #define ENTER_SUPERVISOR_MODE  (vm->cpu->ccr |= 4)
+#define ENTER_VIRTUAL_MODE     (vm->cpu->ccr |= 8)
 
 #define DISABLE_INTERRUPTION   (vm->cpu->ccr &= ~1)
 #define LEAVE_HALT_STATE       (vm->cpu->ccr &= ~2)
 #define ENTER_USER_MODE        (vm->cpu->ccr &= ~4)
+#define LEAVE_VIRTUAL_MODE     (vm->cpu->ccr &= ~8)
+
 
 
 /*

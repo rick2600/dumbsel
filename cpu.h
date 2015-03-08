@@ -5,11 +5,12 @@
 #define SWAP_UINT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
 
 #define ICACHE_SIZE 16
-#define EXEC_QUANTUM 8
+#define QUANTUM      8
 
 typedef enum
 {
-  INT_TIME_EXPIRATION
+  QUANTUM_EXPIRED
+
 } cpu_int_t;
 
 

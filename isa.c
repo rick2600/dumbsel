@@ -124,7 +124,7 @@ int isa_psh(vm_t *vm)
     vm->cpu->regs[15] -= 2;
   else
   {
-    fprintf(stderr, "Bus error\n");
+    fprintf(stderr, "Bus error 6\n");
   }
 
   return 1;
@@ -143,7 +143,7 @@ int isa_psha(vm_t *vm)
       vm->cpu->regs[15] -= 2;
     else
     {
-      fprintf(stderr, "Bus error\n");
+      fprintf(stderr, "Bus error 7\n");
     }
   }
   
@@ -165,7 +165,7 @@ int isa_popa(vm_t *vm)
     }
     else
     {
-      fprintf(stderr, "Bus error\n");
+      fprintf(stderr, "Bus error 8\n");
     }
   }
   vm->cpu->regs[15] += 2;
@@ -182,7 +182,7 @@ int isa_iback(vm_t *vm)
   vm->cpu->pc = vm->cpu->_pc;
   vm->cpu->flags = vm->cpu->_flags;
   vm->cpu->ccr = CCR_INT_ENABLE(vm->cpu->ccr);
-  vm->cpu->time_slice = 0;
+  vm->cpu->time_slice = QUANTUM;
   */
   return 1;
 }
@@ -201,7 +201,7 @@ int isa_pop(vm_t *vm)
   }
   else
   {
-    fprintf(stderr, "Bus error\n");
+    fprintf(stderr, "Bus error 1\n");
   }
   return 1;
 }
@@ -229,7 +229,7 @@ int isa_load(vm_t *vm)
   }
   else
   {
-    fprintf(stderr, "Bus error\n");
+    fprintf(stderr, "Bus error 2\n");
   }
   return 1;
 }
@@ -251,7 +251,7 @@ int isa_store(vm_t *vm)
 
   if (!cpu_w_mem(vm, addr, data, mode_req))
   {
-    fprintf(stderr, "Bus error\n");
+    fprintf(stderr, "Bus error 3\n");
   }
   return 1;
 }
@@ -409,7 +409,7 @@ int isa_call(vm_t *vm)
   }
   else
   {
-    fprintf(stderr, "Bus error\n");
+    fprintf(stderr, "Bus error 4\n");
   }
   return 1;
 }
@@ -424,7 +424,7 @@ int isa_back(vm_t *vm)
   }
   else
   {
-    fprintf(stderr, "Bus error\n");
+    fprintf(stderr, "Bus error 5\n");
   }
   return 1;
 }
@@ -502,7 +502,7 @@ int isa_ldctx(vm_t *vm)
   }
 
   ENTER_SUPERVISOR_MODE;
-  vm->cpu->time_slice = 0;
+  vm->cpu->time_slice = QUANTUM;
   return 1;
 }
 
@@ -529,7 +529,7 @@ int isa_di(vm_t *vm)
 int isa_ei(vm_t *vm)
 {
   vm->cpu->ccr = vm->cpu->ccr | 0x0001;
-  vm->cpu->time_slice = 0;
+  vm->cpu->time_slice = QUANTUM;
   return 1;
 }
 

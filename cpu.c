@@ -31,9 +31,11 @@ void *cpu_uc(void *args)
  
   vm_t *vm = (vm_t *)args;
   
-  vm->cpu->time_slice = 0;
+  vm->cpu->time_slice = QUANTUM;
 
   LEAVE_HALT_STATE;
+  ENTER_VIRTUAL_MODE;
+  vm->cpu->acr = 0x0000;
 
   while(1)
   {
@@ -50,14 +52,16 @@ void *cpu_uc(void *args)
     cpu_execute(vm);
 
     if (INTERRUPTION_ENABLED)
-      vm->cpu->time_slice++;
+      vm->cpu->time_slice--;
 
-    if (vm->cpu->time_slice == EXEC_QUANTUM)
+    if (!vm->cpu->time_slice)
     {
       if (INTERRUPTION_ENABLED)
-        raise_interruption(vm, INT_TIME_EXPIRATION);
-      vm->cpu->time_slice = 0;
+        raise_interruption(vm, QUANTUM_EXPIRED);
+
+      vm->cpu->time_slice = QUANTUM;
     }
+  
   }
   return NULL;
 }
@@ -95,6 +99,17 @@ static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss)
 static unsigned int fetch_from_mem(vm_t *vm)
 {
   unsigned int data;
+
+  if (!cpu_r_mem(vm, vm->cpu->pc, &data))
+    fprintf(stderr, "Bus error 9\n");
+
+  return data;
+}
+
+/*
+static unsigned int fetch_from_mem(vm_t *vm)
+{
+  unsigned int data;
   pthread_mutex_lock(&vm->mem_bus->lock);
   vm->mem_bus->mar = vm->cpu->pc;  
   vm->mem_bus->control = REQ_READ; 
@@ -114,6 +129,8 @@ static unsigned int fetch_from_mem(vm_t *vm)
   return data;
 }
 
+*/
+
 static void cache_instruction(vm_t *vm, unsigned int inst)
 {
   //printf("caching... %04x %08x at %d\n", vm->cpu->pc, SWAP_UINT32(inst), vm->cpu->icache_oldest);
@@ -131,6 +148,7 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
   unsigned int addr, data; 
 
   addr = vm->cpu->icr + (interruption * sizeof(unsigned short int));
+  printf("a: %04x\n", addr);
   if (cpu_r_mem(vm, addr, &data))
   {
     handler = data & 0xffff;
@@ -139,10 +157,10 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
 
     switch(interruption)
     {
-      case INT_TIME_EXPIRATION:
+      case QUANTUM_EXPIRED:
       {
         //vm->cpu->ccr = CCR_SET_SUPERVISOR(vm->cpu->ccr);
-        printf("Interruption: INT_TIME_EXPIRATION (handler: %04x)\n", handler);
+        printf("Interruption: QUANTUM_EXPIRED (handler: %04x)\n", handler);
         //vm->cpu->pc = handler;
       }
       break;
