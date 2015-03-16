@@ -11,10 +11,10 @@
 typedef struct 
 {  
   io_bus_t *io_bus;
-  mem_bus_t *mem_bus;
-  cpu_t *cpu;
+  mmu_t mmu;
+  cpu_t cpu;
   ram_t *ram;
-  int debug_mode;
+  uint32_t debug_mode;
 
 } vm_t;
 

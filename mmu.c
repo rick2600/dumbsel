@@ -4,93 +4,122 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static short int mmu_translation_unit(vm_t *vm);
 static void mmu_read(vm_t *vm);
-static void mmu_write(vm_t *vm, unsigned int mode);
+static void mmu_write(vm_t *vm, uint32_t mode);
+static uint16_t mmu_translation_unit(vm_t *vm, uint32_t *read_ok, uint32_t *write_ok);
+
 
 void *mmu_service(void *args)
 {
   vm_t *vm = (vm_t *)args;
   while(1)
   {  
-    pthread_mutex_lock(&vm->mem_bus->lock);
-    if (IN_HALT_STATE)
+    pthread_mutex_lock(&vm->mmu.lock);
+    if (IN_HALT_STATE(vm->cpu.ccr))
     {
-      pthread_mutex_unlock(&vm->mem_bus->lock);
+      pthread_mutex_unlock(&vm->mmu.lock);
       break;  
     }
-    switch(vm->mem_bus->control)
+    switch(vm->mmu.control)
     {
       case REQ_READ: mmu_read(vm); break;
       case REQ_WRITE_W: mmu_write(vm, REQ_WRITE_W); break;
       case REQ_WRITE_B: mmu_write(vm, REQ_WRITE_B); break;
       default: break;
     }
-    pthread_mutex_unlock(&vm->mem_bus->lock);
+    pthread_mutex_unlock(&vm->mmu.lock);
   }
   return NULL;
 }
 
-static short int mmu_translation_unit(vm_t *vm)
+static uint16_t mmu_translation_unit(vm_t *vm, uint32_t *read_ok, uint32_t *write_ok)
 {
-  unsigned short int addr = vm->mem_bus->mar, base, index, offset;
-  unsigned short int ptable = vm->ram[vm->cpu->acr];
+  uint16_t addr, base, index, offset, page;
 
-/*
-  printf("v: %04x\n", addr);
-  if (VIRTUAL_MODE_ENABLED)
+  addr = vm->mmu.mar;
+
+  if (VIRTUAL_MODE_ENABLED(vm->cpu.ccr))
   {
-    index = vm->mem_bus->mar >> 12;
-    base = *(unsigned short int *)&vm->ram[ptable + (index * 2)];
-    offset = vm->mem_bus->mar & 0x0fff;
+    index = vm->mmu.mar >> 12;
+    page = *(uint16_t *)&vm->ram[vm->cpu.acr + (index * 2)];    
+    base = page & ~31;
+    offset = vm->mmu.mar & 0x0fff;
     addr = base + offset;
-    printf("b: %04x o: %04x => %04x\n", base, offset, addr);
+
+    if (!PAGE_PRESENT(page) || 
+       (!IN_SUPERVISOR_MODE(vm->cpu.ccr) && PAGE_SUP(page)))
+    {
+      *read_ok = 0;
+      *write_ok = 0;
+    }
+    else
+    {
+      if (PAGE_READ(page))
+        *read_ok = 1;
+
+      if (PAGE_WRITE(page))
+        *write_ok = 1;
+    }
+
   }
-*/
+  else
+  {
+    *read_ok = 1; 
+    *write_ok = 1; 
+  }
+
   return addr;
 }
 
 
 static void mmu_read(vm_t *vm)
 {
-  unsigned short int paddr = mmu_translation_unit(vm);
+  uint32_t read_ok, write_ok;
+  uint16_t paddr = mmu_translation_unit(vm, &read_ok, &write_ok);
 
-  if (paddr < RAM_SIZE)
+  if (read_ok)
   {
-    vm->mem_bus->mdr = *(unsigned int *)&vm->ram[paddr];
-    vm->mem_bus->control = RES_READ_OK;
+    if (paddr < RAM_SIZE)
+    {
+      vm->mmu.mdr = *(uint32_t *)&vm->ram[paddr];
+      vm->mmu.control = RES_READ_OK;
+    }
+    else
+      vm->mmu.control = RES_READ_ERR;
   }
-  else
-    vm->mem_bus->control = RES_READ_ERR;
 
 }
 
-static void mmu_write(vm_t *vm, unsigned int mode)
+static void mmu_write(vm_t *vm, uint32_t mode)
 {
-  unsigned short int value;
-  unsigned short int paddr = mmu_translation_unit(vm);
+  uint16_t value;
+  uint32_t read_ok, write_ok;
+  uint16_t paddr = mmu_translation_unit(vm, &read_ok, &write_ok);
 
-  if (mode == REQ_WRITE_W)
-  {   
-    if (paddr < (RAM_SIZE-2))
-    {
-      value = (unsigned short int)vm->mem_bus->mdr;
-      *(unsigned short int *)&vm->ram[paddr] = value;
-      vm->mem_bus->control = RES_WRITE_OK;
-    }
-    else
-      vm->mem_bus->control = RES_WRITE_ERR;
-  }
-  else
+  if (write_ok)
   {
-    if (paddr < (RAM_SIZE-1))
-    {
-      value = (unsigned char)vm->mem_bus->mdr;
-      *(unsigned char *)&vm->ram[paddr] = value;
-      vm->mem_bus->control = RES_WRITE_OK;
+    if (mode == REQ_WRITE_W)
+    {   
+      if (paddr < (RAM_SIZE-2))
+      {
+        value = (uint16_t)vm->mmu.mdr;
+        *(uint16_t *)&vm->ram[paddr] = value;
+        vm->mmu.control = RES_WRITE_OK;
+      }
+      else
+        vm->mmu.control = RES_WRITE_ERR;
     }
     else
-      vm->mem_bus->control = RES_WRITE_ERR;
+    {
+      if (paddr < (RAM_SIZE-1))
+      {
+        value = (uint8_t)vm->mmu.mdr;
+        *(uint8_t *)&vm->ram[paddr] = value;
+        vm->mmu.control = RES_WRITE_OK;
+      }
+      else
+        vm->mmu.control = RES_WRITE_ERR;
+    }
   }
 
 }

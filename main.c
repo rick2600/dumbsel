@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
 void handler(int sig)
 {  
-  if (vm && vm->cpu)
+  if (vm)
   {
     printf("\npress any key to exit\n");
     ENTER_HALT_STATE;

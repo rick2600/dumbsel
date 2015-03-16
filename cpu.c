@@ -16,14 +16,16 @@ static void cpu_fetch(vm_t *vm);
 static void cpu_decode(vm_t *vm);
 static void cpu_execute(vm_t *vm);
 
-static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss);
-static void cache_instruction(vm_t *vm, unsigned int inst);
-static unsigned int fetch_from_mem(vm_t *vm);
+static uint32_t fetch_from_cache(vm_t *vm, uint32_t *miss);
+static void cache_instruction(vm_t *vm, uint32_t inst);
+static uint32_t fetch_from_mem(vm_t *vm);
 static void raise_interruption(vm_t *vm, cpu_int_t interruption);
 static void enter_inthandler(vm_t *vm);
 static void set_clean_context(vm_t *vm);
 
-
+static void cpu_enter_supervisor_mode(vm_t *vm);
+static void cpu_disable_interruptions(vm_t *vm);
+static void cpu_enter_halt_state(vm_t *vm);
 
 
 void *cpu_uc(void *args)
@@ -31,35 +33,31 @@ void *cpu_uc(void *args)
  
   vm_t *vm = (vm_t *)args;
   
-  vm->cpu->time_slice = QUANTUM;
-
-  LEAVE_HALT_STATE;
-  ENTER_VIRTUAL_MODE;
-  vm->cpu->acr = 0x0000;
+  //cpu_enter_supervisor_mode(vm);
+  //cpu_disable_interruptions(vm);
 
   while(1)
   {
-    if (IN_HALT_STATE)
+    if (IN_HALT_STATE(vm->cpu.ccr))
       break;
 
     cpu_fetch(vm);
     cpu_decode(vm);
 
-    if (vm->debug_mode && !IN_SUPERVISOR_MODE)
+    if (vm->debug_mode)
       run_debugger2(vm, !STOP);
-      //run_debugger(vm, SHOW_REGISTER, SHOW_MEMORY, SHOW_INSTRUCTION, !STOP);
-    //sleep(1);
+
     cpu_execute(vm);
 
-    if (INTERRUPTION_ENABLED)
-      vm->cpu->time_slice--;
+    if (INTERRUPTION_ENABLED(vm->cpu.ccr))
+      vm->cpu.time_slice--;
 
-    if (!vm->cpu->time_slice)
+    if (!vm->cpu.time_slice)
     {
-      if (INTERRUPTION_ENABLED)
+      if (INTERRUPTION_ENABLED(vm->cpu.ccr))
         raise_interruption(vm, QUANTUM_EXPIRED);
 
-      vm->cpu->time_slice = QUANTUM;
+      vm->cpu.time_slice = QUANTUM;
     }
   
   }
@@ -68,104 +66,69 @@ void *cpu_uc(void *args)
 
 static void cpu_fetch(vm_t *vm)
 {
-  unsigned int instruction, cache_miss = 1;
+  uint32_t instruction, cache_miss = 1;
   instruction = fetch_from_cache(vm, &cache_miss);
 
   if (cache_miss)
   {
-    //printf("CACHE_MISS (caching...)\n");
     instruction = fetch_from_mem(vm);
     cache_instruction(vm, instruction);
   }
-  //else
-    //printf("CACHE_HIT\n");
-  vm->cpu->pc += 4;
-  vm->cpu->ir = SWAP_UINT32(instruction);
+
+  vm->cpu.pc += 4;
+  vm->cpu.ir = SWAP_UINT32(instruction);
 }
 
-static unsigned int fetch_from_cache(vm_t *vm, unsigned int *miss)
+static uint32_t fetch_from_cache(vm_t *vm, uint32_t *miss)
 {
-  int i;
+  uint32_t i;
   for (i = 0; i < ICACHE_SIZE; i++)
-    if (vm->cpu->icache_addr[i] == (unsigned int)vm->cpu->pc)
+    if (vm->cpu.icache_addr[i] == (uint32_t)vm->cpu.pc)
     {
       *miss = 0;
-      return vm->cpu->icache_data[i];
+      return vm->cpu.icache_data[i];
     }
 
   return 0;
 }
 
-static unsigned int fetch_from_mem(vm_t *vm)
+static uint32_t fetch_from_mem(vm_t *vm)
 {
-  unsigned int data;
+  uint32_t data;
 
-  if (!cpu_r_mem(vm, vm->cpu->pc, &data))
+  if (!cpu_r_mem(vm, vm->cpu.pc, &data))
     fprintf(stderr, "Bus error 9\n");
 
   return data;
 }
 
-/*
-static unsigned int fetch_from_mem(vm_t *vm)
+static void cache_instruction(vm_t *vm, uint32_t inst)
 {
-  unsigned int data;
-  pthread_mutex_lock(&vm->mem_bus->lock);
-  vm->mem_bus->mar = vm->cpu->pc;  
-  vm->mem_bus->control = REQ_READ; 
-  pthread_mutex_unlock(&vm->mem_bus->lock);
-  usleep(2000);
-
-  pthread_mutex_lock(&vm->mem_bus->lock);
-  if (vm->mem_bus->control == RES_READ_OK)
-    data = vm->mem_bus->mdr;
-  else
-  {
-    fprintf(stderr, "Bus Error\n");
-    turn_off(vm);
-    //TODO: write a recovery code?
-  }
-  pthread_mutex_unlock(&vm->mem_bus->lock);
-  return data;
-}
-
-*/
-
-static void cache_instruction(vm_t *vm, unsigned int inst)
-{
-  //printf("caching... %04x %08x at %d\n", vm->cpu->pc, SWAP_UINT32(inst), vm->cpu->icache_oldest);
-
-  vm->cpu->icache_addr[vm->cpu->icache_oldest] = vm->cpu->pc;
-  vm->cpu->icache_data[vm->cpu->icache_oldest] = inst;
-  vm->cpu->icache_oldest++;
-  if (vm->cpu->icache_oldest == 16)
-    vm->cpu->icache_oldest = 0;
+  vm->cpu.icache_addr[vm->cpu.icache_oldest] = vm->cpu.pc;
+  vm->cpu.icache_data[vm->cpu.icache_oldest] = inst;
+  vm->cpu.icache_oldest++;
+  if (vm->cpu.icache_oldest == 16)
+    vm->cpu.icache_oldest = 0;
 }
 
 static void raise_interruption(vm_t *vm, cpu_int_t interruption)
 {
-  unsigned short int handler;
-  unsigned int addr, data; 
+  uint16_t handler;
+  uint32_t addr, data; 
 
-  addr = vm->cpu->icr + (interruption * sizeof(unsigned short int));
+  addr = vm->cpu.icr + (interruption * sizeof(uint16_t));
   printf("a: %04x\n", addr);
   if (cpu_r_mem(vm, addr, &data))
   {
     handler = data & 0xffff;
-    //enter_inthandler(vm);
-    //set_clean_context(vm);
 
-    switch(interruption)
-    {
-      case QUANTUM_EXPIRED:
-      {
-        //vm->cpu->ccr = CCR_SET_SUPERVISOR(vm->cpu->ccr);
-        printf("Interruption: QUANTUM_EXPIRED (handler: %04x)\n", handler);
-        //vm->cpu->pc = handler;
-      }
-      break;
-      default: break;
-    }
+    printf("INT %d, handler: %04x\n", interruption, handler); 
+
+
+    enter_inthandler(vm);
+    cpu_disable_interruptions(vm);
+    cpu_enter_supervisor_mode(vm);
+    vm->cpu.pc = handler;
 
   }
   else
@@ -174,42 +137,50 @@ static void raise_interruption(vm_t *vm, cpu_int_t interruption)
   }
 }
 
-
 static void enter_inthandler(vm_t *vm)
 {
-  int i;
+  if (cpu_w_mem(vm, vm->cpu.regs[15] - 2, vm->cpu.flags, REQ_WRITE_W))
+    vm->cpu.regs[15] -= 2;
 
-  for (i = 0; i < 16; i++)
-    vm->cpu->_regs[i] = vm->cpu->regs[i];
+  if (cpu_w_mem(vm, vm->cpu.regs[15] - 2, vm->cpu.ccr, REQ_WRITE_W))
+    vm->cpu.regs[15] -= 2;
 
-  vm->cpu->_pc = vm->cpu->pc;
-  vm->cpu->_flags = vm->cpu->flags;
+  if (cpu_w_mem(vm, vm->cpu.regs[15] - 2, vm->cpu.pc, REQ_WRITE_W))
+    vm->cpu.regs[15] -= 2;
 
 }
 
-
-static void set_clean_context(vm_t *vm)
-{
-  memset(vm->cpu->regs, 0, sizeof(vm->cpu->regs));
-  vm->cpu->flags = 0;
-  vm->cpu->_flags = 0;
-}
 
 static void cpu_decode(vm_t *vm)
 {
-  vm->cpu->inst->op = vm->cpu->ir >> 26;
-  vm->cpu->inst->has_imm = (vm->cpu->ir >> 25) & 1;
-  vm->cpu->inst->byte_mode = (vm->cpu->ir >> 24) & 1;
-  vm->cpu->inst->ra = (vm->cpu->ir >> 20) & 0x0f;
-  vm->cpu->inst->rb = (vm->cpu->ir >> 16) & 0x0f;
-  vm->cpu->inst->rc = (vm->cpu->ir >> 12) & 0x0f;
-  vm->cpu->inst->imm = SWAP_UINT16(vm->cpu->ir & 0xffff);
+  vm->cpu.inst.op = vm->cpu.ir >> 26;
+  vm->cpu.inst.i = (vm->cpu.ir >> 25) & 1;
+  vm->cpu.inst.bmode = (vm->cpu.ir >> 24) & 1;
+  vm->cpu.inst.ra = (vm->cpu.ir >> 20) & 0x0f;
+  vm->cpu.inst.rb = (vm->cpu.ir >> 16) & 0x0f;
+  vm->cpu.inst.rc = (vm->cpu.ir >> 12) & 0x0f;
+  vm->cpu.inst.imm = SWAP_UINT16(vm->cpu.ir & 0xffff);
 }
 
 static void cpu_execute(vm_t *vm)
 {
-  if (vm->cpu->isa[vm->cpu->inst->op])
-    vm->cpu->isa[vm->cpu->inst->op](vm);
+  if (vm->cpu.opers[vm->cpu.inst.op])
+    vm->cpu.opers[vm->cpu.inst.op](vm);
   else
-    ENTER_HALT_STATE;
+    cpu_enter_halt_state(vm);
+}
+
+static void cpu_enter_supervisor_mode(vm_t *vm)
+{
+  vm->cpu.ccr |= 4;
+}
+
+static void cpu_disable_interruptions(vm_t *vm)
+{
+  vm->cpu.ccr &= ~1;
+}
+
+static void cpu_enter_halt_state(vm_t *vm)
+{
+  vm->cpu.ccr |= 2;
 }

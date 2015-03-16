@@ -1,5 +1,5 @@
-#ifndef __ISA_H
-#define __ISA_H
+#ifndef __op_H
+#define __op_H
 
 #include "vm.h"
 
@@ -51,46 +51,50 @@
 #define IBACK 46
 #define PSHA  47
 #define POPA  48
+#define LDACR 49
+#define STACR 50
 
 // FLAGS
 
-#define ZF (vm->cpu->flags & 1)
-#define LT ((vm->cpu->flags >> 1) & 1)
-#define GT ((vm->cpu->flags >> 2) & 1)
-#define CF ((vm->cpu->flags >> 3) & 1)
-#define SF ((vm->cpu->flags >> 4) & 1)
-#define OF ((vm->cpu->flags >> 5) & 1)
+#define ZF (vm->cpu.flags & 1)
+#define LT ((vm->cpu.flags >> 1) & 1)
+#define GT ((vm->cpu.flags >> 2) & 1)
+#define CF ((vm->cpu.flags >> 3) & 1)
+#define SF ((vm->cpu.flags >> 4) & 1)
+#define OF ((vm->cpu.flags >> 5) & 1)
 
-#define SET_ZF (vm->cpu->flags |= 1)
-#define SET_LT (vm->cpu->flags |= 2)
-#define SET_GT (vm->cpu->flags |= 4)
-#define SET_CF (vm->cpu->flags |= 8)
-#define SET_SF (vm->cpu->flags |= 16)
-#define SET_OF (vm->cpu->flags |= 32)
+#define SET_ZF (vm->cpu.flags |= 1)
+#define SET_LT (vm->cpu.flags |= 2)
+#define SET_GT (vm->cpu.flags |= 4)
+#define SET_CF (vm->cpu.flags |= 8)
+#define SET_SF (vm->cpu.flags |= 16)
+#define SET_OF (vm->cpu.flags |= 32)
 
-#define CLR_ZF (vm->cpu->flags &= ~1)
-#define CLR_LT (vm->cpu->flags &= ~2)
-#define CLR_GT (vm->cpu->flags &= ~4)
-#define CLR_CF (vm->cpu->flags &= ~8)
-#define CLR_SF (vm->cpu->flags &= ~16)
-#define CLR_OF (vm->cpu->flags &= ~32)
+#define CLR_ZF (vm->cpu.flags &= ~1)
+#define CLR_LT (vm->cpu.flags &= ~2)
+#define CLR_GT (vm->cpu.flags &= ~4)
+#define CLR_CF (vm->cpu.flags &= ~8)
+#define CLR_SF (vm->cpu.flags &= ~16)
+#define CLR_OF (vm->cpu.flags &= ~32)
+
+
 
 // CCR - CPU CONTROL REGISTER
 
-#define INTERRUPTION_ENABLED   (vm->cpu->ccr & 1)
-#define IN_HALT_STATE          ((vm->cpu->ccr >> 1) & 1)
-#define IN_SUPERVISOR_MODE     ((vm->cpu->ccr >> 2) & 1)
-#define VIRTUAL_MODE_ENABLED    ((vm->cpu->ccr >> 3) & 1)
+#define INTERRUPTION_ENABLED(x)    ((x) & 1)
+#define IN_HALT_STATE(x)           (((x) >> 1) & 1)
+#define IN_SUPERVISOR_MODE(x)      (((x) >> 2) & 1)
+#define VIRTUAL_MODE_ENABLED(x)    (((x) >> 3) & 1)
 
-#define ENABLE_INTERRUPTION    (vm->cpu->ccr |= 1)
-#define ENTER_HALT_STATE       (vm->cpu->ccr |= 2)
-#define ENTER_SUPERVISOR_MODE  (vm->cpu->ccr |= 4)
-#define ENTER_VIRTUAL_MODE     (vm->cpu->ccr |= 8)
+#define ENABLE_INTERRUPTION    (vm->cpu.ccr |= 1)
+#define ENTER_HALT_STATE       (vm->cpu.ccr |= 2)
+#define ENTER_SUPERVISOR_MODE  (vm->cpu.ccr |= 4)
+#define ENTER_VIRTUAL_MODE     (vm->cpu.ccr |= 8)
 
-#define DISABLE_INTERRUPTION   (vm->cpu->ccr &= ~1)
-#define LEAVE_HALT_STATE       (vm->cpu->ccr &= ~2)
-#define ENTER_USER_MODE        (vm->cpu->ccr &= ~4)
-#define LEAVE_VIRTUAL_MODE     (vm->cpu->ccr &= ~8)
+#define DISABLE_INTERRUPTION   (vm->cpu.ccr &= ~1)
+#define LEAVE_HALT_STATE       (vm->cpu.ccr &= ~2)
+#define ENTER_USER_MODE        (vm->cpu.ccr &= ~4)
+#define LEAVE_VIRTUAL_MODE     (vm->cpu.ccr &= ~8)
 
 
 
@@ -136,67 +140,72 @@
 
 
 
-int __isa_psh(vm_t *vm, unsigned short v);
-int cpu_w_mem(vm_t *vm, unsigned short int mar, unsigned int mdr, unsigned int m);
-int cpu_r_mem(vm_t *vm, unsigned short int mar, unsigned int *data);
+int __op_psh(vm_t *vm, unsigned short v);
+int cpu_w_mem(vm_t *vm, uint16_t mar, uint32_t mdr, uint32_t m);
+int cpu_r_mem(vm_t *vm, uint16_t mar, uint32_t *data);
 
 
-int isa_mov(vm_t *vm);
-int isa_ext(vm_t *vm);
-int isa_exts(vm_t *vm);
-int isa_add(vm_t *vm);
-int isa_sub(vm_t *vm);
-int isa_mul(vm_t *vm);
-int isa_div(vm_t *vm);
-int isa_inc(vm_t *vm);
-int isa_dec(vm_t *vm);
-int isa_not(vm_t *vm);
+void op_mov(vm_t *vm);
+void op_ext(vm_t *vm);
+void op_exts(vm_t *vm);
+void op_add(vm_t *vm);
+void op_sub(vm_t *vm);
+void op_mul(vm_t *vm);
+void op_div(vm_t *vm);
+void op_inc(vm_t *vm);
+void op_dec(vm_t *vm);
+void op_not(vm_t *vm);
 
-int isa_or(vm_t *vm);
-int isa_and(vm_t *vm);
-int isa_xor(vm_t *vm);
-int isa_shl(vm_t *vm);
-int isa_shr(vm_t *vm);
+void op_or(vm_t *vm);
+void op_and(vm_t *vm);
+void op_xor(vm_t *vm);
+void op_shl(vm_t *vm);
+void op_shr(vm_t *vm);
 
-int isa_cmp(vm_t *vm);
-int isa_cmps(vm_t *vm);
+void op_cmp(vm_t *vm);
+void op_cmps(vm_t *vm);
 
-int isa_load(vm_t *vm);
-int isa_store(vm_t *vm);
+void op_load(vm_t *vm);
+void op_store(vm_t *vm);
 
-int isa_psh(vm_t *vm);
-int isa_pop(vm_t *vm);
-int isa_hlt(vm_t *vm);
-int isa_nop(vm_t *vm);
-int isa_br(vm_t *vm);
-int isa_bre(vm_t *vm);
-int isa_brne(vm_t *vm);
-int isa_brg(vm_t *vm);
-int isa_brge(vm_t *vm);
-int isa_brl(vm_t *vm);
-int isa_brle(vm_t *vm);
-int isa_call(vm_t *vm);
-int isa_back(vm_t *vm);
-int isa_ldflg(vm_t *vm);
-int isa_stflg(vm_t *vm);
-int isa_ldccr(vm_t *vm);
-int isa_stccr(vm_t *vm);
+void op_psh(vm_t *vm);
+void op_pop(vm_t *vm);
+void op_hlt(vm_t *vm);
+void op_nop(vm_t *vm);
+void op_br(vm_t *vm);
+void op_bre(vm_t *vm);
+void op_brne(vm_t *vm);
+void op_brg(vm_t *vm);
+void op_brge(vm_t *vm);
+void op_brl(vm_t *vm);
+void op_brle(vm_t *vm);
+void op_call(vm_t *vm);
+void op_back(vm_t *vm);
+void op_ldflg(vm_t *vm);
+void op_stflg(vm_t *vm);
 
-int isa_ldicr(vm_t *vm);
-int isa_sticr(vm_t *vm);
-int isa_ldtcr(vm_t *vm);
-int isa_sttcr(vm_t *vm);
+void op_ldccr(vm_t *vm);
+void op_stccr(vm_t *vm);
 
-int isa_ldctx(vm_t *vm);
-int isa_stctx(vm_t *vm);
+void op_ldicr(vm_t *vm);
+void op_sticr(vm_t *vm);
 
-int isa_di(vm_t *vm);
-int isa_ei(vm_t *vm);
+void op_ldtcr(vm_t *vm);
+void op_sttcr(vm_t *vm);
 
-int isa_iback(vm_t *vm);
+void op_ldacr(vm_t *vm);
+void op_stacr(vm_t *vm);
 
-int isa_psha(vm_t *vm);
-int isa_popa(vm_t *vm);
+void op_ldctx(vm_t *vm);
+void op_stctx(vm_t *vm);
+
+void op_di(vm_t *vm);
+void op_ei(vm_t *vm);
+
+void op_iback(vm_t *vm);
+
+void op_psha(vm_t *vm);
+void op_popa(vm_t *vm);
 
 
 

@@ -1,6 +1,7 @@
 #include "vm.h"
 #include "cpu.h"
 #include "ram.h"
+#include "mmu.h"
 #include "isa.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,12 +9,12 @@
 
 static void show_registers(vm_t *vm);
 static void show_memory(ram_t *ram);
-static void show_instruction(cpu_t *cpu);
+static void show_instruction(vm_t *vm);
 static void init_names(void);
 static void show_memory_and_disas(vm_t *vm);
 static void show_stack(vm_t *vm);
-static void disas(unsigned short int addr, unsigned int raw_inst);
-static void show_stack_and_registers(vm_t *vm);
+static void disas(uint16_t addr, uint32_t raw_inst);
+//static void show_stack_and_registers(vm_t *vm);
 
 
 
@@ -22,7 +23,7 @@ int showpc, ok2inc;
 int init;
 char *inst_names[64];
 
-void run_debugger(vm_t *vm, int r, int m, int i, int stop)
+void run_debugger(vm_t *vm, uint32_t r, uint32_t m, uint32_t i, uint32_t stop)
 {
   showpc = 0;
   ok2inc = 0;
@@ -37,7 +38,7 @@ void run_debugger(vm_t *vm, int r, int m, int i, int stop)
     show_memory(vm->ram);
 
   if (i)
-  show_instruction(vm->cpu);
+  show_instruction(vm);
 
   if(stop)
   {
@@ -46,9 +47,9 @@ void run_debugger(vm_t *vm, int r, int m, int i, int stop)
   }
 }
 
-void run_debugger2(vm_t *vm, int stop)
+void run_debugger2(vm_t *vm, uint32_t stop)
 {
-  int a;
+  uint32_t a;
 
   if (!init)
     init_names();
@@ -78,48 +79,63 @@ void run_debugger2(vm_t *vm, int stop)
   }
 }
 
+/*
 static void show_stack_and_registers(vm_t *vm)
 {
-  int i, j;
+  uint32_t i, j;
   char *regs[] = {
     "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8 ",
     "r9 ", "r10", "r11", "r12", "r13", "bs ", "ts "
   };
   char buf[128];
-  unsigned short int v;
+  uint16_t v;
   for (i = 0, j = 0; i < 16; i+=2, j++)
   {
-    v = *(unsigned short int *)&vm->ram[vm->cpu->regs[15]+i];
+    v = *(uint16_t *)&vm->ram[vm->cpu.regs[15]+i];
     v &= 0xffff;
 
     sprintf(buf, "%s: 0x%04x (u: %5hu, s: %5hd)  .  %s: 0x%04x (u: %5hu, s: %5hd)", 
-      regs[j], vm->cpu->regs[j], vm->cpu->regs[j], (signed int)vm->cpu->regs[j],
-      regs[j+8], vm->cpu->regs[j+8], vm->cpu->regs[j+8], (signed int)vm->cpu->regs[j+8]);
+      regs[j], vm->cpu.regs[j], vm->cpu.regs[j], (signed int)vm->cpu.regs[j],
+      regs[j+8], vm->cpu.regs[j+8], vm->cpu.regs[j+8], (signed int)vm->cpu.regs[j+8]);
 
 
-    printf("ts+%02x: |0x%04x| 0x%04x |   %s\n", i, vm->cpu->regs[15]+i, v, buf);
+    printf("ts+%02x: |0x%04x| 0x%04x |   %s\n", i, vm->cpu.regs[15]+i, v, buf);
   }
 }
+*/
 
+/*
+static void show_stack(vm_t *vm)
+{
+  uint32_t i, r, w;
+  uint16_t v, addr;
+  //addr = mmu_translation_unit(vm, &r, &w);
+  for (i = 0; i < 20; i+=2)
+  {
+    v = *(uint16_t *)&vm->ram[addr+i];
+    v &= 0xffff;
+    printf("ts+%02x: |0x%04x| 0x%04x\n", i, addr+i, v);
+  }
+}
+*/
 
 static void show_stack(vm_t *vm)
 {
-  int i;
-  unsigned short int v;
+  uint32_t i;
+  uint16_t v;
   for (i = 0; i < 20; i+=2)
   {
-    v = *(unsigned short int *)&vm->ram[vm->cpu->regs[15]+i];
+    v = *(uint16_t *)&vm->ram[vm->cpu.regs[15]+i];
     v &= 0xffff;
-    printf("ts+%02x: |0x%04x| 0x%04x\n", i, vm->cpu->regs[15]+i, v);
+    printf("ts+%02x: |0x%04x| 0x%04x\n", i, vm->cpu.regs[15]+i, v);
   }
 }
-
 
 /*
 static void show_memory_and_disas(vm_t *vm)
 {
-  int i, j, pos = 0;
-  int inst, temp;
+  uint32_t i, j, pos = 0;
+  uint32_t inst, temp;
   //for (i = 0; i < RAM_SIZE; i+=16)
   for (i = 0; i < 256; i+=16)
   {
@@ -128,14 +144,14 @@ static void show_memory_and_disas(vm_t *vm)
       printf("%02x ", vm->ram[j+i]);
 
     temp = showpc+(pos*4);
-    inst = SWAP_UINT32(*(unsigned int *)&vm->ram[temp]);
-    printf(" |%s0x%04x | ", (temp == (vm->cpu->pc-4)) ? " pc: ": "     ", temp);
+    inst = SWAP_UINT32(*(uint32_t *)&vm->ram[temp]);
+    printf(" |%s0x%04x | ", (temp == (vm->cpu.pc-4)) ? " pc: ": "     ", temp);
     
     disas(inst);
     pos++;
     printf("\n");
   }
-  if (vm->cpu->pc == 32)
+  if (vm->cpu.pc == 32)
     ok2inc = 1;
 
   if(ok2inc)
@@ -145,8 +161,8 @@ static void show_memory_and_disas(vm_t *vm)
 
 static void show_memory_and_disas(vm_t *vm)
 {
-  int i, j, pos = vm->cpu->pc - 4;
-  int inst;
+  int32_t i, j, pos = vm->cpu.pc - 4;
+  uint32_t inst;
   //for (i = 0; i < RAM_SIZE; i+=16)
   for (i = 0; i < 256; i+=16)
   {
@@ -154,15 +170,15 @@ static void show_memory_and_disas(vm_t *vm)
     for (j = 0; j < 16; j++)
       printf("%02x ", vm->ram[j+i]);
 
-    inst = SWAP_UINT32(*(unsigned int *)&vm->ram[pos]);
-    printf(" |%s0x%04x | ", (pos == (vm->cpu->pc-4)) ? " pc: ": "     ", pos);
+    inst = SWAP_UINT32(*(uint32_t *)&vm->ram[pos]);
+    printf(" |%s0x%04x | ", (pos == (vm->cpu.pc-4)) ? " pc: ": "     ", pos);
     
     disas(pos+4, inst);
     pos += 4;
     printf("\n");
   }
   /*
-  if (!(vm->cpu->pc % 32))
+  if (!(vm->cpu.pc % 32))
     ok2inc = 1;
 
   if(ok2inc)
@@ -170,15 +186,15 @@ static void show_memory_and_disas(vm_t *vm)
   */
 }
 
-static void disas(unsigned short int addr, unsigned int raw_inst)
+static void disas(uint16_t addr, uint32_t raw_inst)
 {
-  unsigned int op = raw_inst >> 26;
-  unsigned char has_imm = (raw_inst >> 25) & 1;
-  unsigned char byte_mode = (raw_inst >> 24) & 1;
-  unsigned char ra = (raw_inst >> 20) & 0x0f;
-  unsigned char rb = (raw_inst >> 16) & 0x0f;
-  unsigned char rc = (raw_inst >> 12) & 0x0f;
-  unsigned short int imm = SWAP_UINT16(raw_inst & 0xffff);
+  uint32_t op = raw_inst >> 26;
+  uint8_t i = (raw_inst >> 25) & 1;
+  uint8_t bmode = (raw_inst >> 24) & 1;
+  uint8_t ra = (raw_inst >> 20) & 0x0f;
+  uint8_t rb = (raw_inst >> 16) & 0x0f;
+  uint8_t rc = (raw_inst >> 12) & 0x0f;
+  uint16_t imm = SWAP_UINT16(raw_inst & 0xffff);
   
 
   char oper[16];
@@ -201,7 +217,7 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     case BRLE:
     case CALL:
     {
-      if (has_imm)
+      if (i)
       {
         if (op != PSH)
           sprintf(oper, "<0x%04x>", (addr + imm) & 0xfff);
@@ -216,6 +232,8 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     }
     break;
 
+    case LDACR:
+    case STACR:
     case LDICR:
     case STICR:
     case LDTCR:
@@ -245,14 +263,14 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     case CMP:
     case CMPS:
     {
-      if (has_imm)
+      if (i)
         sprintf(oper, "0x%04x", imm);
       else
         sprintf(oper, "%s", regs[rb]);
 
       printf("%s%s %s,%s", 
         inst_names[op], 
-        (byte_mode) ? "b":"",
+        (bmode) ? "b":"",
         regs[ra],
         oper
       );
@@ -271,14 +289,14 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     case LOAD:
     case STORE:
     {
-      if (has_imm)
+      if (i)
         sprintf(oper, "0x%04x", imm);
       else
         sprintf(oper, "%s", regs[rc]);
 
       printf("%s%s %s,%s,%s", 
         inst_names[op],
-        (byte_mode) ? "b":"",
+        (bmode) ? "b":"",
         regs[ra],
         regs[rb],
         oper
@@ -293,7 +311,7 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
     {
       printf("%s%s %s",
         inst_names[op], 
-        (byte_mode) ? "b":"",
+        (bmode) ? "b":"",
         regs[ra]
       );
     }
@@ -305,27 +323,27 @@ static void disas(unsigned short int addr, unsigned int raw_inst)
 /*
 static void show_registers(cpu_t *cpu)
 {
-  int i;
+  uint32_t i;
   //printf("Registers:\n");
   for (i = 0; i < 8; i++)
-    printf("r%02d: 0x%04x  ", i, cpu->regs[i]);
+    printf("r%02d: 0x%04x  ", i, cpu.regs[i]);
   printf("\n");
 
   for (i = 8; i < 14; i++)
-    printf("r%02d: 0x%04x  ", i, cpu->regs[i]);
-  printf("bs:  0x%04x  ts:  0x%04x  \n", cpu->regs[14], cpu->regs[15]);
+    printf("r%02d: 0x%04x  ", i, cpu.regs[i]);
+  printf("bs:  0x%04x  ts:  0x%04x  \n", cpu.regs[14], cpu.regs[15]);
 
-  printf("pc:  0x%04x  flags: 0x%04x [", cpu->pc - 4, cpu->flags);
+  printf("pc:  0x%04x  flags: 0x%04x [", cpu.pc - 4, cpu.flags);
   printf(" %s%s%s]\n", 
-    ZF(cpu->flags) ? "ZF ": "",
-    LT(cpu->flags) ? "LT ": "",
-    GT(cpu->flags) ? "GT ": ""
+    ZF(cpu.flags) ? "ZF ": "",
+    LT(cpu.flags) ? "LT ": "",
+    GT(cpu.flags) ? "GT ": ""
   );
 }
 */
 static void show_registers(vm_t *vm)
 {
-  int i;
+  uint32_t i;
   char *regs[] = {
     "r0 ", "r1 ", "r2 ", "r3 ", "r4 ", "r5 ", "r6 ", "r7 ", "r8 ",
     "r9 ", "r10", "r11", "r12", "r13", "bs ", "ts "
@@ -333,13 +351,13 @@ static void show_registers(vm_t *vm)
 
   for (i = 0; i < 8; i++)
     printf("%s: 0x%04x (u: %5hu, s: %5hd)        %s: 0x%04x (u: %5hu, s: %5hd)\n", 
-      regs[i], vm->cpu->regs[i], vm->cpu->regs[i], (signed int)vm->cpu->regs[i],
-      regs[i+8], vm->cpu->regs[i+8], vm->cpu->regs[i+8], (signed int)vm->cpu->regs[i+8]);
+      regs[i], vm->cpu.regs[i], vm->cpu.regs[i], (signed int)vm->cpu.regs[i],
+      regs[i+8], vm->cpu.regs[i+8], vm->cpu.regs[i+8], (signed int)vm->cpu.regs[i+8]);
   printf("\n");
   printf("pc:  0x%04x    ccr: 0x%04x    "\
     "icr: 0x%04x    tcr: 0x%04x    acr: 0x%04x    t: %d    flags: 0x%04x [", 
-      vm->cpu->pc - 4, vm->cpu->ccr, vm->cpu->icr, vm->cpu->tcr, 
-      vm->cpu->acr, vm->cpu->time_slice, vm->cpu->flags);
+      vm->cpu.pc - 4, vm->cpu.ccr, vm->cpu.icr, vm->cpu.tcr, 
+      vm->cpu.acr, vm->cpu.time_slice, vm->cpu.flags);
   printf(" %s%s%s%s%s%s]\n", 
     ZF ? "ZF ": "",
     LT ? "LT ": "",
@@ -353,7 +371,7 @@ static void show_registers(vm_t *vm)
 
 static void show_memory(ram_t *ram)
 {
-  int i, j;
+  uint32_t i, j;
   printf("Memory:\n");
   for (i = 0; i < RAM_SIZE; i+=16)
   {
@@ -365,7 +383,7 @@ static void show_memory(ram_t *ram)
   printf("\n\n");
 }
 
-static void show_instruction(cpu_t *cpu)
+static void show_instruction(vm_t *vm)
 {
   char oper[16];
   char *regs[] = {
@@ -374,8 +392,8 @@ static void show_instruction(cpu_t *cpu)
   };
 
   printf("Instruction:\n");
-  printf("0x%04x -> ", cpu->pc - 4);
-  switch(cpu->inst->op)
+  printf("0x%04x -> ", vm->cpu.pc - 4);
+  switch(vm->cpu.inst.op)
   {
 
     case PSH:
@@ -387,18 +405,18 @@ static void show_instruction(cpu_t *cpu)
     case BRL:
     case BRLE:
     {
-      if (cpu->inst->has_imm)
-        sprintf(oper, "0x%04x", cpu->inst->imm);
+      if (vm->cpu.inst.i)
+        sprintf(oper, "0x%04x", vm->cpu.inst.imm);
       else
-        sprintf(oper, "%s", regs[cpu->inst->rb]);
-      printf("%s %s", inst_names[cpu->inst->op], oper);
+        sprintf(oper, "%s", regs[vm->cpu.inst.rb]);
+      printf("%s %s", inst_names[vm->cpu.inst.op], oper);
     }
     break;
 
     case HLT:
     case NOP:
     {
-      printf("%s\n", inst_names[cpu->inst->op]);
+      printf("%s\n", inst_names[vm->cpu.inst.op]);
     }
     break;
 
@@ -406,15 +424,15 @@ static void show_instruction(cpu_t *cpu)
     case EXT:
     case EXTS:
     {
-      if (cpu->inst->has_imm)
-        sprintf(oper, "0x%04x", cpu->inst->imm);
+      if (vm->cpu.inst.i)
+        sprintf(oper, "0x%04x", vm->cpu.inst.imm);
       else
-        sprintf(oper, "%s", regs[cpu->inst->rb]);
+        sprintf(oper, "%s", regs[vm->cpu.inst.rb]);
 
       printf("%s%s %s,%s\n", 
-        inst_names[cpu->inst->op], 
-        (cpu->inst->byte_mode) ? "b":"",
-        regs[cpu->inst->ra],
+        inst_names[vm->cpu.inst.op], 
+        (vm->cpu.inst.bmode) ? "b":"",
+        regs[vm->cpu.inst.ra],
         oper
       );
     }
@@ -432,16 +450,16 @@ static void show_instruction(cpu_t *cpu)
     case LOAD:
     case STORE:
     {
-      if (cpu->inst->has_imm)
-        sprintf(oper, "0x%04x", cpu->inst->imm);
+      if (vm->cpu.inst.i)
+        sprintf(oper, "0x%04x", vm->cpu.inst.imm);
       else
-        sprintf(oper, "%s", regs[cpu->inst->rc]);
+        sprintf(oper, "%s", regs[vm->cpu.inst.rc]);
 
       printf("%s%s %s,%s,%s\n", 
-        inst_names[cpu->inst->op],
-        (cpu->inst->byte_mode) ? "b":"",
-        regs[cpu->inst->ra],
-        regs[cpu->inst->rb],
+        inst_names[vm->cpu.inst.op],
+        (vm->cpu.inst.bmode) ? "b":"",
+        regs[vm->cpu.inst.ra],
+        regs[vm->cpu.inst.rb],
         oper
       );
     }
@@ -453,14 +471,14 @@ static void show_instruction(cpu_t *cpu)
     case POP:
     {
       printf("%s%s %s\n",
-        inst_names[cpu->inst->op], 
-        (cpu->inst->byte_mode) ? "b":"",
-        regs[cpu->inst->ra]
+        inst_names[vm->cpu.inst.op], 
+        (vm->cpu.inst.bmode) ? "b":"",
+        regs[vm->cpu.inst.ra]
       );
     }
     break;
 
-    default: printf("inv (%02x) (0x%08x)\n", cpu->inst->op, cpu->ir); break;
+    default: printf("inv (%02x) (0x%08x)\n", vm->cpu.inst.op, vm->cpu.ir); break;
   }
   
 }
@@ -508,6 +526,8 @@ static void init_names(void)
   inst_names[STICR] = "sticr";
   inst_names[LDTCR] = "ldtcr";
   inst_names[STTCR] = "sttcr";
+  inst_names[LDACR] = "ldacr";
+  inst_names[STACR] = "stacr";
   inst_names[DI] = "di";
   inst_names[EI] = "ei";
   inst_names[IBACK] = "iback";
@@ -517,3 +537,4 @@ static void init_names(void)
   inst_names[STCTX] = "stctx";
 
 }
+

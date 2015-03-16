@@ -1,5 +1,6 @@
 #include "vm.h"
 #include "isa.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,10 +10,10 @@
 #include <unistd.h>
 
 
-static int init_io_bus(vm_t *vm);
-static int init_mem_bus(vm_t *vm);
-static int init_cpu(vm_t *vm);
-static int init_ram(vm_t *vm);
+static uint32_t init_io_bus(vm_t *vm);
+static uint32_t init_mmu(vm_t *vm);
+static uint32_t init_cpu(vm_t *vm);
+static uint32_t init_ram(vm_t *vm);
 static void load_code(vm_t *vm, char *code_file);
 static off_t getfsize(const char *filename);
 
@@ -23,7 +24,7 @@ int turn_on(vm_t *vm, char *code_file)
   pthread_t cpu_thread, mmu_thread;//, io_thread;
 
   printf("Turning on...\n");
-  if (!init_io_bus(vm) || !init_mem_bus(vm) || !init_cpu(vm) || !init_ram(vm))
+  if (!init_io_bus(vm) || !init_mmu(vm) || !init_cpu(vm) || !init_ram(vm))
   {
     fprintf(stderr, "VM Fatal Err\n");
     turn_off(vm);
@@ -48,7 +49,7 @@ int turn_on(vm_t *vm, char *code_file)
     exit(EXIT_FAILURE);
   }
 
-  if (pthread_mutex_init(&vm->mem_bus->lock, NULL) != 0)
+  if (pthread_mutex_init(&vm->mmu.lock, NULL) != 0)
   {
     fprintf(stderr, "Mutex init failed\n");
     turn_off(vm);
@@ -66,7 +67,7 @@ int turn_on(vm_t *vm, char *code_file)
   pthread_join(cpu_thread, NULL);
   pthread_join(mmu_thread, NULL);
 
-  pthread_mutex_destroy(&vm->mem_bus->lock);
+  pthread_mutex_destroy(&vm->mmu.lock);
   pthread_mutex_destroy(&vm->io_bus->lock);
 
   return 1;
@@ -76,7 +77,7 @@ static void load_code(vm_t *vm, char *code_file)
 {
   FILE *in;
 
-  unsigned int size = getfsize(code_file);
+  uint32_t size = getfsize(code_file);
   if (size >= RAM_SIZE)
   {
     fprintf(stderr, "code too big to fit in memory\n");
@@ -89,7 +90,7 @@ static void load_code(vm_t *vm, char *code_file)
     perror("");
     turn_off(vm);
   }
-  fread(vm->ram, sizeof(unsigned char), size, in);
+  fread(vm->ram, sizeof(uint8_t), size, in);
   fclose(in);
 
 }
@@ -108,17 +109,6 @@ int turn_off(vm_t *vm)
   
   if (vm->io_bus)
     free(vm->io_bus);
-
-  if (vm->mem_bus)
-    free(vm->mem_bus);
-
-  if (vm->cpu)
-  {
-    if (vm->cpu->inst)
-      free(vm->cpu->inst);
-    
-    free(vm->cpu);
-  }
 
   if (vm->ram)
     free(vm->ram);
@@ -140,14 +130,12 @@ vm_t *create_vm(void)
   }
 
   vm->io_bus = NULL;
-  vm->mem_bus = NULL;
-  vm->cpu = NULL;
   vm->ram = NULL;
 
   return vm;  
 }
 
-static int init_io_bus(vm_t *vm)
+static uint32_t init_io_bus(vm_t *vm)
 {
   vm->io_bus = (io_bus_t *)malloc(sizeof(io_bus_t));
   memset(vm->io_bus, 0, sizeof(io_bus_t));
@@ -155,104 +143,93 @@ static int init_io_bus(vm_t *vm)
   return (vm->io_bus) ? 1 : 0;
 }
 
-static int init_mem_bus(vm_t *vm)
-{
-  vm->mem_bus = (mem_bus_t *)malloc(sizeof(mem_bus_t));
-  memset(vm->mem_bus, 0, sizeof(mem_bus_t));
-  printf("  MEM BUS - %s\n", (vm->mem_bus) ? "OK" : "ERR");
-  return (vm->mem_bus) ? 1 : 0;
+static uint32_t init_mmu(vm_t *vm)
+{  
+  memset(&vm->mmu, 0, sizeof(mmu_t));
+  printf("  MEM BUS - OK\n");
+  return 1;
 }
 
-static int init_cpu(vm_t *vm)
+static uint32_t init_cpu(vm_t *vm)
 {
-  vm->cpu = (cpu_t *)malloc(sizeof(cpu_t));
-  memset(vm->cpu, 0, sizeof(cpu_t));
+  memset(&vm->cpu, 0, sizeof(cpu_t));
   
-  if (vm->cpu)  
-    vm->cpu->inst = (inst_t *)malloc(sizeof(inst_t));
-
-  memset(vm->cpu->regs, 0, sizeof(vm->cpu->regs));
-  memset(vm->cpu->isa, 0, sizeof(vm->cpu->isa));
-
-  ENABLE_INTERRUPTION;
-
-  vm->cpu->isa[MOV] = isa_mov;
-  vm->cpu->isa[EXT] = isa_ext;
-  vm->cpu->isa[EXTS] = isa_exts;
-
-  vm->cpu->isa[ADD] = isa_add;
-  vm->cpu->isa[SUB] = isa_sub;
-  vm->cpu->isa[MUL] = isa_mul;
-  vm->cpu->isa[DIV] = isa_div;
-  vm->cpu->isa[INC] = isa_inc;
-  vm->cpu->isa[DEC] = isa_dec;
-
-  vm->cpu->isa[OR] = isa_or;
-  vm->cpu->isa[AND] = isa_and;
-  vm->cpu->isa[XOR] = isa_xor;
-  vm->cpu->isa[SHL] = isa_shl;
-  vm->cpu->isa[SHR] = isa_shr;
-  vm->cpu->isa[NOT] = isa_not;
-
-  vm->cpu->isa[CMP] = isa_cmp;
-  vm->cpu->isa[CMPS] = isa_cmps;
-
-  vm->cpu->isa[HLT] = isa_hlt;
-  vm->cpu->isa[NOP] = isa_nop;
-  vm->cpu->isa[PSH] = isa_psh;
-  vm->cpu->isa[POP] = isa_pop;
-
-  vm->cpu->isa[BR] = isa_br;
-  vm->cpu->isa[BRE] = isa_bre;
-  vm->cpu->isa[BRNE] = isa_brne;
-  vm->cpu->isa[BRG] = isa_brg;
-  vm->cpu->isa[BRGE] = isa_brge;
-  vm->cpu->isa[BRL] = isa_brl;
-  vm->cpu->isa[BRLE] = isa_brl;
-
-  vm->cpu->isa[LOAD] = isa_load;
-  vm->cpu->isa[STORE] = isa_store;
-
-  vm->cpu->isa[CALL] = isa_call;
-  vm->cpu->isa[BACK] = isa_back;
-
-  vm->cpu->isa[LDFLG] = isa_ldflg;
-  vm->cpu->isa[STFLG] = isa_stflg;
-  vm->cpu->isa[LDCCR] = isa_ldccr;
-  vm->cpu->isa[STCCR] = isa_stccr;
-  vm->cpu->isa[LDICR] = isa_ldicr;
-  vm->cpu->isa[STICR] = isa_sticr;
-  vm->cpu->isa[LDTCR] = isa_ldtcr;
-  vm->cpu->isa[STTCR] = isa_sttcr;
-
-  vm->cpu->isa[LDCTX] = isa_ldctx;
-  vm->cpu->isa[STCTX] = isa_stctx;
-
-  vm->cpu->isa[DI] = isa_di;
-  vm->cpu->isa[EI] = isa_ei;
-  vm->cpu->isa[IBACK] = isa_iback;
-
-  vm->cpu->isa[PSHA] = isa_psha;
-  vm->cpu->isa[POPA] = isa_popa;
-
-  memset(vm->cpu->icache_addr, 0xff, sizeof(vm->cpu->icache_addr));
-  vm->cpu->icache_oldest = 0;
-
-/*
-  // Test
-  int i;
-  for (i = 0; i < 16; i++)
-    vm->cpu->regs[i] = i;
-*/
+  //ENABLE_INTERRUPTION;
+  ENTER_SUPERVISOR_MODE;
+  vm->cpu.time_slice = QUANTUM;
 
 
-  printf("  CPU - %s\n", (vm->cpu && vm->cpu->inst) ? "OK" : "ERR");
-  return (vm->cpu && vm->cpu->inst) ? 1 : 0;
+  vm->cpu.opers[MOV] = op_mov;
+  vm->cpu.opers[EXT] = op_ext;
+  vm->cpu.opers[EXTS] = op_exts;
+
+  vm->cpu.opers[ADD] = op_add;
+  vm->cpu.opers[SUB] = op_sub;
+  vm->cpu.opers[MUL] = op_mul;
+  vm->cpu.opers[DIV] = op_div;
+  vm->cpu.opers[INC] = op_inc;
+  vm->cpu.opers[DEC] = op_dec;
+
+  vm->cpu.opers[OR] = op_or;
+  vm->cpu.opers[AND] = op_and;
+  vm->cpu.opers[XOR] = op_xor;
+  vm->cpu.opers[SHL] = op_shl;
+  vm->cpu.opers[SHR] = op_shr;
+  vm->cpu.opers[NOT] = op_not;
+
+  vm->cpu.opers[CMP] = op_cmp;
+  vm->cpu.opers[CMPS] = op_cmps;
+
+  vm->cpu.opers[HLT] = op_hlt;
+  vm->cpu.opers[NOP] = op_nop;
+  vm->cpu.opers[PSH] = op_psh;
+  vm->cpu.opers[POP] = op_pop;
+
+  vm->cpu.opers[BR] = op_br;
+  vm->cpu.opers[BRE] = op_bre;
+  vm->cpu.opers[BRNE] = op_brne;
+  vm->cpu.opers[BRG] = op_brg;
+  vm->cpu.opers[BRGE] = op_brge;
+  vm->cpu.opers[BRL] = op_brl;
+  vm->cpu.opers[BRLE] = op_brl;
+
+  vm->cpu.opers[LOAD] = op_load;
+  vm->cpu.opers[STORE] = op_store;
+
+  vm->cpu.opers[CALL] = op_call;
+  vm->cpu.opers[BACK] = op_back;
+
+  vm->cpu.opers[LDFLG] = op_ldflg;
+  vm->cpu.opers[STFLG] = op_stflg;
+  vm->cpu.opers[LDCCR] = op_ldccr;
+  vm->cpu.opers[STCCR] = op_stccr;
+  vm->cpu.opers[LDICR] = op_ldicr;
+  vm->cpu.opers[STICR] = op_sticr;
+  vm->cpu.opers[LDTCR] = op_ldtcr;
+  vm->cpu.opers[STTCR] = op_sttcr;
+  vm->cpu.opers[LDACR] = op_ldacr;
+  vm->cpu.opers[STACR] = op_stacr;
+
+  vm->cpu.opers[LDCTX] = op_ldctx;
+  vm->cpu.opers[STCTX] = op_stctx;
+
+  vm->cpu.opers[DI] = op_di;
+  vm->cpu.opers[EI] = op_ei;
+  vm->cpu.opers[IBACK] = op_iback;
+
+  vm->cpu.opers[PSHA] = op_psha;
+  vm->cpu.opers[POPA] = op_popa;
+
+  memset(vm->cpu.icache_addr, 0xff, sizeof(vm->cpu.icache_addr));
+  vm->cpu.icache_oldest = 0;
+
+  printf("  CPU - OK");
+  return 1;
 }
 
-static int init_ram(vm_t *vm)
+static uint32_t init_ram(vm_t *vm)
 {
-  unsigned int size = (unsigned int)sizeof(ram_t) * RAM_SIZE;
+  uint32_t size = (uint32_t)sizeof(ram_t) * RAM_SIZE;
   vm->ram = (ram_t *)malloc(size);
   memset(vm->ram, 0, size);
   printf("  RAM (0x%x bytes) - %s\n", size, (vm->ram) ? "OK" : "ERR");

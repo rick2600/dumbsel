@@ -3,8 +3,8 @@
 
 #include "vm.h"
 
-void run_debugger(vm_t *vm, int r, int m, int i, int stop);
-void run_debugger2(vm_t *vm, int stop);
+void run_debugger(vm_t *vm, uint32_t r, uint32_t m, uint32_t i, uint32_t stop);
+void run_debugger2(vm_t *vm, uint32_t stop);
 
 
 

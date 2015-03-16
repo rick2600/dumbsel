@@ -1,6 +1,13 @@
 #ifndef __MMU_H
 #define __MMU_H
 
+#define PAGE_SUP(x)     (((x) >> 4) & 1)
+#define PAGE_READ(x)    (((x) >> 3) & 1)
+#define PAGE_WRITE(x)   (((x) >> 2) & 1)
+#define PAGE_PRESENT(x) ((x) & 1)
+#define PAGE_BASE(x)    ((x) & ~31)
+
+#include <stdint.h>
 #include <pthread.h>
 
 typedef enum
@@ -20,11 +27,12 @@ typedef struct
 { 
   pthread_mutex_t lock;
   mem_control_bus_t control;
-  unsigned short int mar;
-  unsigned int mdr;
-} mem_bus_t;
+  uint16_t mar;
+  uint32_t mdr;
+} mmu_t;
 
 
 void *mmu_service(void *args);
+
 
 #endif

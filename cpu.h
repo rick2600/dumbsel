@@ -7,6 +7,8 @@
 #define ICACHE_SIZE 16
 #define QUANTUM      8
 
+#include <stdint.h>
+
 typedef enum
 {
   QUANTUM_EXPIRED
@@ -16,12 +18,12 @@ typedef enum
 
 typedef struct
 {
-  unsigned int op; 
-  unsigned char has_imm;
-  unsigned char byte_mode;
-  unsigned char ra; 
-  unsigned char rb; 
-  unsigned char rc; 
+  uint32_t op; 
+  uint8_t i;
+  uint8_t bmode;
+  uint8_t ra; 
+  uint8_t rb; 
+  uint8_t rc; 
   unsigned short imm;
 
 } inst_t;
@@ -31,42 +33,41 @@ typedef struct
 typedef struct 
 {
   // instructions
-  int (*isa[64])();
+  void (*opers[64])();
 
   // context
-  unsigned short int regs[16];
-  unsigned short int pc; 
-  unsigned short int temp;
-  unsigned short int flags;
+  uint16_t regs[16];
+  uint16_t pc; 
+  uint16_t flags;
 
   // last task context when entered in supervisor mode
-  unsigned short int _regs[16];
-  unsigned short int _pc; 
-  unsigned short int _flags;
+  uint16_t _regs[16];
+  uint16_t _pc; 
+  uint16_t _flags;
 
 
   // cache
-  unsigned int icache_data[ICACHE_SIZE];
-  unsigned int icache_addr[ICACHE_SIZE];
-  unsigned int icache_oldest;
+  uint32_t icache_data[ICACHE_SIZE];
+  uint32_t icache_addr[ICACHE_SIZE];
+  uint32_t icache_oldest;
 
   // intruction decoding
-  unsigned int ir; 
-  inst_t *inst;
+  uint32_t ir; 
+  inst_t inst;
 
   // task control register
-  unsigned short int tcr;
+  uint16_t tcr;
 
   // interruption control register
-  unsigned short int icr;
+  uint16_t icr;
 
   // cpu control register
-  unsigned short int ccr;
+  uint16_t ccr;
 
   // address control register
-  unsigned short int acr;
+  uint16_t acr;
 
-  unsigned char time_slice;
+  uint8_t time_slice;
 
 } cpu_t;
 
